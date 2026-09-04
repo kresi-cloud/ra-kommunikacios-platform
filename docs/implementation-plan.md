@@ -6,7 +6,7 @@
 |---|---|---|
 | I0 | Auth, profil, RBAC/ABAC alap, RLS, audit, privát storage, PWA és CI | Implementálva; CI-vel ellenőrizve |
 | I1/A | Projektmodell, hozzáférés, projektlista, projektállapotok | Implementálva |
-| I1/B1 | Feladat- és eseménymodell, RLS/RPC, lista, agenda, kezdőlapi mutatók | Implementálva; DB-CI ellenőrzendő |
+| I1/B1 | Feladat- és eseménymodell, RLS/RPC, lista, agenda, kezdőlapi mutatók | Implementálva; CI-vel ellenőrizve |
 | I1/B2 | Létrehozó/szerkesztő felületek, Kanban, résztvevők és elfoglaltság | Következő |
 | I1/B3 | Értesítési outbox, időzített eseménylezárás, Google busy-sync alap | Következő |
 | I2 | Fájlok, verziók, review és jóváhagyás | Tervezett |
