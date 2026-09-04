@@ -5,9 +5,14 @@ declare
   pilot_user_id uuid;
 begin
   select id
-    into strict pilot_user_id
+    into pilot_user_id
     from auth.users
    where lower(email) = 'pilot-user@example.com';
+
+  if pilot_user_id is null then
+    raise notice 'Pilot user is absent; bootstrap activation skipped.';
+    return;
+  end if;
 
   insert into public.profiles (
     id, display_name, email, is_internal_member, account_status,
