@@ -170,8 +170,10 @@ using (private.can_access_project(project_id));
 
 grant select on public.seasons, public.tags, public.projects, public.project_members, public.project_tags,
   public.project_critical_blocks to authenticated;
+revoke all on public.seasons, public.tags, public.projects, public.project_members,
+  public.project_tags, public.project_critical_blocks from anon;
 revoke insert, update, delete on public.seasons, public.tags, public.projects, public.project_members,
-  public.project_tags, public.project_critical_blocks from anon, authenticated;
+  public.project_tags, public.project_critical_blocks from authenticated;
 
 create or replace function public.create_project(
   project_title text,

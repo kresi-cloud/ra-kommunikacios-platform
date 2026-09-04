@@ -309,8 +309,14 @@ using (private.is_active_user() and (delegator_user_id = auth.uid() or delegate_
 create policy audit_read_lead on public.audit_log for select to authenticated
 using (private.is_communication_lead());
 
-revoke insert, update, delete on public.audit_log from anon, authenticated;
-revoke all on public.invitations, public.bootstrap_activations from anon, authenticated;
+-- A Supabase public sémájának alapértelmezett jogosultságai az anon szerepnek
+-- is adhatnak táblajogot, ezért az anonim tiltást mindig explicit visszavonjuk.
+revoke all on public.profiles, public.roles, public.permissions,
+  public.user_role_assignments, public.user_permission_grants,
+  public.invitations, public.bootstrap_activations, public.delegations,
+  public.audit_log from anon;
+revoke insert, update, delete on public.audit_log from authenticated;
+revoke all on public.invitations, public.bootstrap_activations from authenticated;
 revoke update on public.profiles from authenticated;
 grant select on public.profiles, public.roles, public.permissions,
   public.user_role_assignments, public.user_permission_grants,
