@@ -29,6 +29,42 @@ values
   ('40000000-0000-4000-8000-000000000002', 'PROJECT-B', 'B projekt', '30000000-0000-4000-8000-000000000003', '30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001')
 on conflict (id) do nothing;
 
+insert into public.tasks(
+  id, task_code, title, responsible_user_id, project_id, status, acceptance_status,
+  priority, due_at, unscheduled, created_by, updated_by
+) values
+  ('50000000-0000-4000-8000-000000000001', 'TASK-A', 'A projekt feladata',
+    '30000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-000000000001',
+    'assigned', 'pending', 'normal', '2026-09-10T10:00:00Z', false,
+    '30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001'),
+  ('50000000-0000-4000-8000-000000000002', 'TASK-B', 'B projekt feladata',
+    '30000000-0000-4000-8000-000000000003', '40000000-0000-4000-8000-000000000002',
+    'assigned', 'pending', 'normal', null, true,
+    '30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.events(
+  id, event_code, title, event_type, responsible_user_id, project_id,
+  starts_at, ends_at, location_name, status, created_by, updated_by
+) values
+  ('60000000-0000-4000-8000-000000000001', 'EVENT-A', 'A projekt eseménye', 'press_event',
+    '30000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-000000000001',
+    '2026-09-12T08:00:00Z', '2026-09-12T10:00:00Z', 'Akadémia', 'scheduled',
+    '30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001'),
+  ('60000000-0000-4000-8000-000000000002', 'EVENT-B', 'B projekt eseménye', 'meeting',
+    '30000000-0000-4000-8000-000000000003', '40000000-0000-4000-8000-000000000002',
+    '2026-09-13T08:00:00Z', '2026-09-13T09:00:00Z', 'Tárgyaló', 'scheduled',
+    '30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.event_participants(
+  id, event_id, participant_type, user_id, status, response_required, invited_by
+) values (
+  '61000000-0000-4000-8000-000000000001', '60000000-0000-4000-8000-000000000001',
+  'user', '30000000-0000-4000-8000-000000000003', 'pending', true,
+  '30000000-0000-4000-8000-000000000001'
+) on conflict (id) do nothing;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000002', true);
 
@@ -40,6 +76,41 @@ begin
   if exists (select 1 from public.projects where id = '40000000-0000-4000-8000-000000000002') then
     raise exception 'TC-RLS-002: idegen projekt kiszivárgott';
   end if;
+  if (select count(*) from public.tasks) <> 1 then
+    raise exception 'TC-RLS-TASK: a projektgazda nem pontosan a saját projektfeladatát látja';
+  end if;
+  if (select count(*) from public.events) <> 1 then
+    raise exception 'TC-RLS-EVENT: a projektgazda nem pontosan a saját projekteseményét látja';
+  end if;
+end;
+$$;
+
+select public.transition_task(
+  '50000000-0000-4000-8000-000000000001', 'accepted', null, null, false
+);
+do $$
+begin
+  if (select status from public.tasks where id = '50000000-0000-4000-8000-000000000001') <> 'accepted' then
+    raise exception 'TC-TASK-003: a felelős elfogadása nem váltott állapotot';
+  end if;
+  begin
+    update public.tasks set title = 'Tiltott közvetlen módosítás'
+    where id = '50000000-0000-4000-8000-000000000001';
+    raise exception 'TC-RLS-TASK-WRITE: közvetlen feladatmódosítás engedélyezett';
+  exception when insufficient_privilege then null;
+  end;
+end;
+$$;
+
+select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000003', true);
+select public.respond_to_event(
+  '61000000-0000-4000-8000-000000000001', 'accepted'
+);
+do $$
+begin
+  if (select status from public.event_participants where id = '61000000-0000-4000-8000-000000000001') <> 'accepted' then
+    raise exception 'TC-EVT-003: a részvételi válasz nem maradt meg';
+  end if;
 end;
 $$;
 
@@ -48,6 +119,9 @@ do $$
 begin
   if exists (select 1 from public.projects) then
     raise exception 'TC-RLS-009: a technikai admin közvetlen projektadatot lát';
+  end if;
+  if exists (select 1 from public.tasks) or exists (select 1 from public.events) then
+    raise exception 'TC-RLS-009B: a technikai admin feladatot vagy eseményt lát';
   end if;
 end;
 $$;
@@ -59,6 +133,12 @@ begin
   begin
     perform 1 from public.projects limit 1;
     raise exception 'TC-RLS-001: az anonim szerep lekérdezést hajthatott végre';
+  exception when insufficient_privilege then
+    null;
+  end;
+  begin
+    perform 1 from public.tasks limit 1;
+    raise exception 'TC-RLS-001B: az anonim szerep feladatot kérdezhetett le';
   exception when insufficient_privilege then
     null;
   end;

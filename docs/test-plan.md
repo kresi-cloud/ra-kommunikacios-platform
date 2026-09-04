@@ -5,10 +5,10 @@
 | Réteg | Parancs | Fókusz |
 |---|---|---|
 | Lint és típus | `npm run lint`, `npm run typecheck` | statikus hibák, strict TypeScript |
-| Unit/komponens | `npm test` | konfiguráció, időzóna, projektlogika, belépés, listaállapotok |
+| Unit/komponens | `npm test` | konfiguráció, időzóna, projekt-/feladatlogika, belépés, listák, naptári csoportosítás, kezdőlapi mutatók |
 | Build/PWA | `npm run build` | kiadható csomag és service worker |
 | Böngésző | `npm run test:e2e` | belépés, routing, reszponzív alap |
-| Adatbázis | `npm run test:db` | anonim tiltás, projektszeparáció, technikai admin tiltása |
+| Adatbázis | `npm run test:db` | anonim tiltás, projekt-/feladat-/eseményszeparáció, technikai admin tiltása, feladatelfogadás, részvételi válasz |
 
 ## Belépési feltétel
 
@@ -17,4 +17,3 @@ PR csak zöld `npm run check` után egyesíthető. RLS-t érintő módosításho
 ## Ismert helyi korlát
 
 A böngészőteszthez Playwright Chromium, a DB-teszthez Dockerrel futó Supabase vagy elérhető teszt-adatbázis szükséges. Ha ezek hiányoznak, az eredmény nem jelölhető futtatottnak; a GitHub Actions mindkettőt előkészíti.
-

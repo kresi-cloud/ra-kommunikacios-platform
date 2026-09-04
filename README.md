@@ -1,6 +1,6 @@
 # RA kommunikációs platform
 
-Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supabase alapon. A repository jelenleg az I0 biztonsági alapot és az I1 első, projektekre szűkített szeletét tartalmazza.
+Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supabase alapon. A repository az I0 biztonsági alapot, az I1 projektmodulját, valamint a feladat- és eseménymodul első használható szeletét tartalmazza.
 
 ## Elkészült
 
@@ -11,7 +11,10 @@ Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supab
 - minden üzleti táblán bekapcsolt és kikényszerített RLS;
 - a technikai admin kommunikációs tartalomhoz való normál hozzáférésének tiltása;
 - privát storage bucketek közvetlen klienshozzáférés nélkül;
-- projektlista és projektállapot-átmenetek első I1 implementációja;
+- projektlista és projektállapot-átmenetek;
+- egyfelelős feladatmodell, kiosztás/elfogadás, blokkolás, review, határidő-előzmény és auditált RPC-k;
+- önálló vagy projektes események, belső meghívás és naplózott részvételi válasz;
+- RLS-szűrt nyitott feladatlista, budapesti időzónás naptári agenda és élő kezdőlapi mutatók;
 - RLS-, böngésző- és alkalmazástesztek, GitHub Actions munkafolyamat.
 
 ## Helyi indítás
@@ -40,4 +43,3 @@ A DB-teszthez előbb futó, migrált Supabase adatbázis kell. A CI ezt `supabas
 ## Dokumentáció
 
 Az implementációs és üzemeltetési dokumentáció a `docs/` mappában, a változatlan forrásspecifikációk a `docs/specifications/` mappában találhatók. Az eltérően nem jelölt nyitott üzleti konfigurációk értéke `[CONFIGURE_ME]`.
-

@@ -16,6 +16,10 @@ Minden üzleti tábla RLS-kényszer alatt áll. A kliensoldali láthatóság nem
 
 Projektet kommunikációs vezető vagy `create_project` engedéllyel rendelkező aktív felhasználó hozhat létre, de technikai admin nem. Közvetlen kliensoldali insert/update/delete nincs; a létrehozás és állapotváltás auditált RPC.
 
+Feladatot a kommunikációs vezető, a projektgazda a saját projektjében, illetve önálló saját feladatként az aktív felhasználó hozhat létre. Feladatot a felelős, a projektgazda és a kommunikációs vezető a konkrét átmenet szabályai szerint módosíthat. Eseményt ugyanez a kör kezelhet; meghívásra a résztvevő válaszolhat, a névadó helyett kizárólag a kommunikációs vezető járhat el.
+
+A technikai admin feladatot, eseményt és résztvevői adatot sem olvashat. Az anonim szereptől minden érintett táblajog explicit vissza van vonva.
+
 ## Kötelező teszthatárok
 
 - anonim hozzáférés tiltott;
@@ -23,4 +27,6 @@ Projektet kommunikációs vezető vagy `create_project` engedéllyel rendelkező
 - technikai admin nem olvashat projektet;
 - projektgazda csak megengedett átmenetet indíthat;
 - kommunikációs vezető archiválhat és indoklással újranyithat.
-
+- idegen projekt feladata és eseménye nem olvasható;
+- közvetlen feladatírás tiltott, az elfogadás csak RPC-vel történhet;
+- a résztvevői válasz és tényleges válaszadó megmarad.

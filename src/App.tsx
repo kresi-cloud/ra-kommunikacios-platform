@@ -4,9 +4,10 @@ import { AuthProvider } from './auth/AuthProvider'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AppShell } from './components/AppShell'
 import { DashboardPage } from './pages/DashboardPage'
+import { CalendarPage } from './pages/CalendarPage'
 import { LoginPage } from './pages/LoginPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProjectsPage } from './pages/ProjectsPage'
+import { TasksPage } from './pages/TasksPage'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } })
 
@@ -21,8 +22,8 @@ export function App() {
               <Route element={<AppShell />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="projektek" element={<ProjectsPage />} />
-                <Route path="feladatok" element={<PlaceholderPage title="Feladatok" />} />
-                <Route path="naptar" element={<PlaceholderPage title="Naptár" />} />
+                <Route path="feladatok" element={<TasksPage />} />
+                <Route path="naptar" element={<CalendarPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
