@@ -1,55 +1,43 @@
-# RA Kommunikációs Platform
+# RA kommunikációs platform
 
-A Rátgéber Akadémia belső kommunikációs platformjának biztonságközpontú MVP-je.
+Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supabase alapon. A repository jelenleg az I0 biztonsági alapot és az I1 első, projektekre szűkített szeletét tartalmazza.
 
-## Jelenlegi állapot
+## Elkészült
 
-Az `I0 – Biztonságos alap` első végrehajtási köre készült el:
-
-- React + TypeScript + Vite alkalmazáskeret;
-- telepíthető PWA-konfiguráció;
-- magyar hitelesítési felület;
-- Supabase Auth kliens biztonságos, környezetfüggő konfigurációval;
-- identitás-, szerep-, többletjog-, meghívás-, delegáció- és audit-adatmodell;
-- egyszer használható, hash-elve tárolt meghívó- és bootstrap-tokenek;
-- RLS-segédfüggvények és kezdeti pozitív/negatív adatbázistesztek;
-- privát Storage-bucketek nyilvános hozzáférés nélkül.
-
-A kezdőlapon látható napi kártyák bemutatóadatok; az I1 üzleti moduljai még nincsenek implementálva.
+- szigorú TypeScript-, lint-, unit- és build-ellenőrzés;
+- Supabase Auth alapú belépés Google és e-mail/jelszó útvonalon, nyilvános regisztráció nélkül;
+- védett alkalmazásútvonalak, asztali és mobil navigáció, PWA-alap;
+- profil-, szerep-, jogosultság-, delegáció- és audit-adatmodell;
+- minden üzleti táblán bekapcsolt és kikényszerített RLS;
+- a technikai admin kommunikációs tartalomhoz való normál hozzáférésének tiltása;
+- privát storage bucketek közvetlen klienshozzáférés nélkül;
+- projektlista és projektállapot-átmenetek első I1 implementációja;
+- RLS-, böngésző- és alkalmazástesztek, GitHub Actions munkafolyamat.
 
 ## Helyi indítás
 
 Követelmény: Node.js 22 vagy újabb.
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
-A belépés csak konfigurált Supabase-fejlesztői környezettel működik. A hiányzó paramétereket a `.env.example` `[CONFIGURE_ME]` értékei jelzik. Service-role kulcsot tilos `VITE_` változóban megadni.
+Az `.env.local` fájlban valódi Supabase projekt URL és anon kulcs szükséges. A service-role kulcsot tilos kliensoldali változóba tenni.
 
 ## Ellenőrzések
 
 ```bash
 npm run check
+npx playwright install chromium
 npm run test:e2e
+SUPABASE_DB_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres npm run test:db
 ```
 
-Adatbázisteszthez Supabase CLI és Docker-kompatibilis helyi futtatókörnyezet kell:
-
-```bash
-supabase start
-npm run test:db
-```
+A DB-teszthez előbb futó, migrált Supabase adatbázis kell. A CI ezt `supabase start` paranccsal készíti elő.
 
 ## Dokumentáció
 
-- [Megvalósítási terv](docs/implementation-plan.md)
-- [Architektúra](docs/architecture.md)
-- [Jogosultságok és RLS](docs/permissions-and-rls.md)
-- [Biztonság és adatvédelem](docs/security-and-privacy.md)
-- [Tesztterv](docs/test-plan.md)
-- [Üzemeltetési kézikönyv](docs/operations-runbook.md)
+Az implementációs és üzemeltetési dokumentáció a `docs/` mappában, a változatlan forrásspecifikációk a `docs/specifications/` mappában találhatók. Az eltérően nem jelölt nyitott üzleti konfigurációk értéke `[CONFIGURE_ME]`.
 
-Az öt részletes forrásspecifikáció és a fejlesztési masterprompt változatlanul a repó gyökerében található.
