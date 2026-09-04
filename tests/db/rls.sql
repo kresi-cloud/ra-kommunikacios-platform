@@ -89,6 +89,10 @@ select public.transition_task(
   '50000000-0000-4000-8000-000000000001', 'accepted', null, null, false
 );
 select public.create_availability_block('2026-09-15T08:00:00Z', '2026-09-15T10:00:00Z');
+select public.create_task(
+  'Létrehozási tesztfeladat', '30000000-0000-4000-8000-000000000002',
+  '40000000-0000-4000-8000-000000000001', null, null, 'normal', false, null, true, null
+);
 select public.create_scheduled_event(
   'Atomi tesztesemény', 'meeting', '30000000-0000-4000-8000-000000000002',
   '40000000-0000-4000-8000-000000000001', null,
@@ -110,6 +114,9 @@ begin
   end if;
   if (select count(*) from public.events where title = 'Atomi tesztesemény' and status = 'scheduled') <> 1 then
     raise exception 'TC-EVT-CREATE: az atomi eseménylétrehozás nem ütemezett eseményt adott';
+  end if;
+  if (select count(*) from public.tasks where title = 'Létrehozási tesztfeladat' and status = 'assigned') <> 1 then
+    raise exception 'TC-TASK-CREATE: a feladatlétrehozó RPC nem működik';
   end if;
   begin
     insert into public.availability_blocks(user_id, starts_at, ends_at)
@@ -134,6 +141,16 @@ begin
   end if;
   if (select count(*) from public.list_busy_slots('2026-09-15T00:00:00Z', '2026-09-16T00:00:00Z')) <> 1 then
     raise exception 'TC-AVL-BUSY: a busy-only RPC nem adta vissza az idősávot';
+  end if;
+end;
+$$;
+
+select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000001', true);
+select public.create_project('Létrehozási tesztprojekt', '30000000-0000-4000-8000-000000000003');
+do $$
+begin
+  if (select count(*) from public.projects where title = 'Létrehozási tesztprojekt') <> 1 then
+    raise exception 'TC-PROJECT-CREATE: a projektlétrehozó RPC nem működik';
   end if;
 end;
 $$;
