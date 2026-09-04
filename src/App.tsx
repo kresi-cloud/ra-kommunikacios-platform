@@ -8,6 +8,8 @@ import { CalendarPage } from './pages/CalendarPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { TasksPage } from './pages/TasksPage'
+import { TaskDetailPage } from './pages/TaskDetailPage'
+import { EventDetailPage } from './pages/EventDetailPage'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } })
 
@@ -23,7 +25,9 @@ export function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="projektek" element={<ProjectsPage />} />
                 <Route path="feladatok" element={<TasksPage />} />
+                <Route path="feladatok/:taskId" element={<TaskDetailPage />} />
                 <Route path="naptar" element={<CalendarPage />} />
+                <Route path="naptar/:eventId" element={<EventDetailPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -88,6 +88,12 @@ $$;
 select public.transition_task(
   '50000000-0000-4000-8000-000000000001', 'accepted', null, null, false
 );
+select public.create_availability_block('2026-09-15T08:00:00Z', '2026-09-15T10:00:00Z');
+select public.create_scheduled_event(
+  'Atomi tesztesemény', 'meeting', '30000000-0000-4000-8000-000000000002',
+  '40000000-0000-4000-8000-000000000001', null,
+  '2026-09-16T08:00:00Z', '2026-09-16T09:00:00Z', 'Tárgyaló', null, null, false, null
+);
 do $$
 begin
   if (select status from public.tasks where id = '50000000-0000-4000-8000-000000000001') <> 'accepted' then
@@ -97,6 +103,18 @@ begin
     update public.tasks set title = 'Tiltott közvetlen módosítás'
     where id = '50000000-0000-4000-8000-000000000001';
     raise exception 'TC-RLS-TASK-WRITE: közvetlen feladatmódosítás engedélyezett';
+  exception when insufficient_privilege then null;
+  end;
+  if (select count(*) from public.availability_blocks) <> 1 then
+    raise exception 'TC-AVL-001: a saját foglaltság nem olvasható';
+  end if;
+  if (select count(*) from public.events where title = 'Atomi tesztesemény' and status = 'scheduled') <> 1 then
+    raise exception 'TC-EVT-CREATE: az atomi eseménylétrehozás nem ütemezett eseményt adott';
+  end if;
+  begin
+    insert into public.availability_blocks(user_id, starts_at, ends_at)
+    values ('30000000-0000-4000-8000-000000000002', now(), now() + interval '1 hour');
+    raise exception 'TC-AVL-WRITE: közvetlen foglaltságírás engedélyezett';
   exception when insufficient_privilege then null;
   end;
 end;
@@ -110,6 +128,12 @@ do $$
 begin
   if (select status from public.event_participants where id = '61000000-0000-4000-8000-000000000001') <> 'accepted' then
     raise exception 'TC-EVT-003: a részvételi válasz nem maradt meg';
+  end if;
+  if exists (select 1 from public.availability_blocks) then
+    raise exception 'TC-AVL-PRIVACY: más felhasználó foglaltsági sora közvetlenül látható';
+  end if;
+  if (select count(*) from public.list_busy_slots('2026-09-15T00:00:00Z', '2026-09-16T00:00:00Z')) <> 1 then
+    raise exception 'TC-AVL-BUSY: a busy-only RPC nem adta vissza az idősávot';
   end if;
 end;
 $$;

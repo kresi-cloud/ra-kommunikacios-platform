@@ -2,6 +2,7 @@ import { formatInTimeZone } from 'date-fns-tz'
 import { hu } from 'date-fns/locale'
 import { eventStatusLabels, eventTypeLabels, groupEventsByBudapestDay, type CalendarEvent } from '../domain/events'
 import { APP_TIME_ZONE } from '../lib/time'
+import { Link } from 'react-router-dom'
 
 export function CalendarAgenda({ events }: { events: CalendarEvent[] }) {
   if (events.length === 0) {
@@ -26,7 +27,7 @@ export function CalendarAgenda({ events }: { events: CalendarEvent[] }) {
                   {formatInTimeZone(event.startsAt, APP_TIME_ZONE, 'HH:mm')}–{formatInTimeZone(event.endsAt, APP_TIME_ZONE, 'HH:mm')}
                 </time>
                 <div>
-                  <strong>{event.title}</strong>
+                  <strong><Link to={`/naptar/${event.id}`}>{event.title}</Link></strong>
                   <span>{eventTypeLabels[event.eventType]} · {eventStatusLabels[event.status]}</span>
                   <span>{event.locationName || (event.onlineUrl ? 'Online' : 'Helyszín nincs megadva')}</span>
                 </div>
@@ -39,4 +40,3 @@ export function CalendarAgenda({ events }: { events: CalendarEvent[] }) {
     </div>
   )
 }
-

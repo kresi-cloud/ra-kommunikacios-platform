@@ -5,6 +5,7 @@ const event: CalendarEvent = {
   id: '60000000-0000-4000-8000-000000000001',
   eventCode: 'RA-EVT-2026-0001',
   title: 'Szezonnyitó sajtóesemény',
+  description: null,
   eventType: 'press_event',
   responsibleUserId: '30000000-0000-4000-8000-000000000001',
   projectId: null,
@@ -32,4 +33,3 @@ describe('esemény domain', () => {
     })).toThrow('Az esemény vége nem lehet korábbi')
   })
 })
-

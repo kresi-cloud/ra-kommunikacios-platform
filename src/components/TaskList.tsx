@@ -1,5 +1,6 @@
 import { formatBudapestDateTime } from '../lib/time'
 import { taskStatusLabels, type Task } from '../domain/tasks'
+import { Link } from 'react-router-dom'
 
 export function TaskList({ tasks }: { tasks: Task[] }) {
   if (tasks.length === 0) {
@@ -20,7 +21,7 @@ export function TaskList({ tasks }: { tasks: Task[] }) {
               <span className="eyebrow">{task.taskCode}</span>
               <span className={`status-badge task-${task.status}`}>{taskStatusLabels[task.status]}</span>
             </div>
-            <h2>{task.title}</h2>
+            <h2><Link to={`/feladatok/${task.id}`}>{task.title}</Link></h2>
             <p>{task.description || 'Nincs részletes leírás.'}</p>
           </div>
           <dl className="work-meta">
@@ -33,4 +34,3 @@ export function TaskList({ tasks }: { tasks: Task[] }) {
     </ul>
   )
 }
-

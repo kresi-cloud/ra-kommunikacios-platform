@@ -13,6 +13,7 @@ const baseTask: Task = {
 }
 const baseEvent: CalendarEvent = {
   id: '60000000-0000-4000-8000-000000000001', eventCode: 'EVENT-1', title: 'Esemény',
+  description: null,
   eventType: 'meeting', responsibleUserId: userId, projectId: null,
   startsAt: '2026-09-04T08:00:00Z', endsAt: '2026-09-04T09:00:00Z',
   locationName: 'Tárgyaló', onlineUrl: null, isMandatory: false,

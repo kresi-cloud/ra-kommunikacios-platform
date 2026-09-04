@@ -1,6 +1,6 @@
 # RA kommunikációs platform
 
-Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supabase alapon. A repository az I0 biztonsági alapot, az I1 projektmodulját, valamint a feladat- és eseménymodul első használható szeletét tartalmazza.
+Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supabase alapon. A repository az I0 biztonsági alapot, az I1 projektmodulját, valamint a feladat- és eseménymodul használható koordinációs felületeit tartalmazza.
 
 ## Elkészült
 
@@ -14,7 +14,10 @@ Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supab
 - projektlista és projektállapot-átmenetek;
 - egyfelelős feladatmodell, kiosztás/elfogadás, blokkolás, review, határidő-előzmény és auditált RPC-k;
 - önálló vagy projektes események, belső meghívás és naplózott részvételi válasz;
-- RLS-szűrt nyitott feladatlista, budapesti időzónás naptári agenda és élő kezdőlapi mutatók;
+- feladatlétrehozás, lista/Kanban, feladatadatlap és a felelős engedélyezett állapotváltásai;
+- atomi eseménylétrehozás, budapesti időzónás agenda, eseményadatlap, meghívás és részvételi válasz;
+- saját „Nem elérhető” idősávok és privacy-safe csapatfoglaltság;
+- élő kezdőlapi mutatók;
 - RLS-, böngésző- és alkalmazástesztek, GitHub Actions munkafolyamat.
 
 ## Helyi indítás

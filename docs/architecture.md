@@ -21,4 +21,4 @@ A böngésző csak anon kulcsot kap. Az adat-hozzáférés végső döntése az 
 - `supabase/migrations`: verziózott adatmodell, policyk és RPC-k.
 - `tests`, `e2e`: unit/komponens-, RLS- és böngészőtesztek.
 
-Az I1 lekérdezései közvetlenül a RLS-szűrt táblákat olvassák. Állapot-, határidő-, felelős- és részvételi módosítás csak célzott `security definer` RPC-n keresztül történhet; a kliens közvetlen írási táblajogot nem kap.
+Az I1 lekérdezései közvetlenül a RLS-szűrt táblákat olvassák. Állapot-, határidő-, felelős-, részvételi és foglaltsági módosítás csak célzott `security definer` RPC-n keresztül történhet; a kliens közvetlen írási táblajogot nem kap. Az esemény létrehozása és ütemezése egyetlen tranzakciós RPC, ezért részleges, ütemezetlen rekord nem marad hiba esetén.

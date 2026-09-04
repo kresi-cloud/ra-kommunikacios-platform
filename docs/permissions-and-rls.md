@@ -20,6 +20,8 @@ Feladatot a kommunikációs vezető, a projektgazda a saját projektjében, ille
 
 A technikai admin feladatot, eseményt és résztvevői adatot sem olvashat. Az anonim szereptől minden érintett táblajog explicit vissza van vonva.
 
+A saját manuális foglaltsági rekordot a felhasználó csak célzott RPC-vel hozhatja létre vagy vonhatja vissza. A tábla közvetlenül kizárólag a saját aktív rekordokat adja vissza; a csapatnézet biztonsági függvénye csak a felhasználó nevét és a foglalt időintervallumot szolgáltatja, indokot vagy külső naptári részletet nem.
+
 ## Kötelező teszthatárok
 
 - anonim hozzáférés tiltott;
@@ -30,3 +32,5 @@ A technikai admin feladatot, eseményt és résztvevői adatot sem olvashat. Az 
 - idegen projekt feladata és eseménye nem olvasható;
 - közvetlen feladatírás tiltott, az elfogadás csak RPC-vel történhet;
 - a résztvevői válasz és tényleges válaszadó megmarad.
+- más felhasználó foglaltsági sora közvetlenül nem olvasható, a busy-only függvényből viszont az idősáv elérhető;
+- közvetlen foglaltságírás tiltott.

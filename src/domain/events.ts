@@ -32,6 +32,7 @@ export const calendarEventSchema = z.object({
   id: z.uuid(),
   eventCode: z.string().min(1),
   title: z.string().trim().min(1).max(250),
+  description: z.string().max(10000).nullable(),
   eventType: z.enum(Object.keys(eventTypeLabels) as [keyof typeof eventTypeLabels, ...(keyof typeof eventTypeLabels)[]]),
   responsibleUserId: z.uuid(),
   projectId: z.uuid().nullable(),
@@ -54,6 +55,7 @@ export function parseCalendarEventRow(row: Record<string, unknown>): CalendarEve
     id: row.id,
     eventCode: row.event_code,
     title: row.title,
+    description: row.description ?? null,
     eventType: row.event_type,
     responsibleUserId: row.responsible_user_id,
     projectId: row.project_id ?? null,
@@ -67,6 +69,34 @@ export function parseCalendarEventRow(row: Record<string, unknown>): CalendarEve
   })
 }
 
+export const participantStatuses = ['invited', 'accepted', 'declined', 'maybe', 'pending', 'no_response_required'] as const
+export type ParticipantStatus = (typeof participantStatuses)[number]
+
+export const participantStatusLabels: Record<ParticipantStatus, string> = {
+  invited: 'Meghívva', accepted: 'Elfogadta', declined: 'Elutasította', maybe: 'Talán',
+  pending: 'Válaszra vár', no_response_required: 'Nem szükséges válasz'
+}
+
+export type EventParticipant = {
+  id: string
+  eventId: string
+  userId: string | null
+  status: ParticipantStatus
+  responseRequired: boolean
+  displayName: string
+}
+
+export type AvailabilityBlock = {
+  id: string
+  userId: string
+  startsAt: string
+  endsAt: string
+}
+
+export type BusySlot = Omit<AvailabilityBlock, 'id'> & { displayName: string }
+
+export type AssignableUser = { id: string; displayName: string }
+
 export function budapestDayKey(value: string | Date): string {
   return formatInTimeZone(value, APP_TIME_ZONE, 'yyyy-MM-dd')
 }
@@ -78,4 +108,3 @@ export function groupEventsByBudapestDay(events: CalendarEvent[]): Map<string, C
     return groups
   }, new Map<string, CalendarEvent[]>())
 }
-
