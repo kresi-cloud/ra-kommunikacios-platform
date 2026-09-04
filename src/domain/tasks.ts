@@ -84,3 +84,12 @@ export function canResponsibleTransitionTask(from: TaskStatus, to: TaskStatus, r
   return false
 }
 
+const boardTargets: Record<string, TaskStatus | undefined> = {
+  accepted: 'accepted', in_progress: 'in_progress', clarification: 'clarification_needed',
+  blocked: 'blocked', review: 'in_review', completed: 'completed'
+}
+
+export function resolveBoardDropStatus(task: Task, columnId: string): TaskStatus | null {
+  const target = boardTargets[columnId]
+  return target && canResponsibleTransitionTask(task.status, target, task.requiresReview) ? target : null
+}

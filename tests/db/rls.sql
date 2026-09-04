@@ -145,6 +145,88 @@ begin
 end;
 $$;
 
+select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000002', true);
+do $$
+begin
+  begin
+    perform public.change_task_deadline(
+      '50000000-0000-4000-8000-000000000001', '2026-09-20T10:00:00Z', null
+    );
+    raise exception 'TC-TASK-006: a határidő indok nélkül módosult';
+  exception when invalid_parameter_value or insufficient_privilege then null;
+  end;
+end;
+$$;
+select public.change_task_deadline(
+  '50000000-0000-4000-8000-000000000001', '2026-09-20T10:00:00Z', 'Egyeztetett új határidő'
+);
+select public.reassign_task(
+  '50000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000003', 'Kapacitás átrendezése'
+);
+
+select public.update_scheduled_event(
+  '60000000-0000-4000-8000-000000000001', 'A projekt eseménye', 'Frissített leírás',
+  '2026-09-12T08:00:00Z', '2026-09-12T10:00:00Z', 'Akadémia', null, false, null
+);
+do $$
+begin
+  if (select status from public.event_participants where id = '61000000-0000-4000-8000-000000000001') <> 'accepted' then
+    raise exception 'TC-EVT-006: a leírásmódosítás törölte a részvételi választ';
+  end if;
+  if (select count(*) from public.task_deadline_history where task_id = '50000000-0000-4000-8000-000000000001' and reason = 'Egyeztetett új határidő') <> 1 then
+    raise exception 'TC-TASK-007: a határidő-előzmény nem készült el';
+  end if;
+  if (select status from public.tasks where id = '50000000-0000-4000-8000-000000000001') <> 'assigned'
+    or (select acceptance_status from public.tasks where id = '50000000-0000-4000-8000-000000000001') <> 'pending'
+    or (select responsible_user_id from public.tasks where id = '50000000-0000-4000-8000-000000000001') <> '30000000-0000-4000-8000-000000000003' then
+    raise exception 'TC-TASK-011: az átadás nem állította vissza a kiosztást és az elfogadást';
+  end if;
+  if (select count(*) from public.task_assignments_history where task_id = '50000000-0000-4000-8000-000000000001' and reason = 'Kapacitás átrendezése') <> 1 then
+    raise exception 'TC-TASK-011: az átadási előzmény nem készült el';
+  end if;
+  if (select public.count_event_conflicts('60000000-0000-4000-8000-000000000001', '2026-09-15T08:30:00Z', '2026-09-15T09:30:00Z')) < 1 then
+    raise exception 'TC-EVT-008: az ütközésvizsgálat nem jelezte a foglaltságot';
+  end if;
+end;
+$$;
+
+select public.update_scheduled_event(
+  '60000000-0000-4000-8000-000000000001', 'A projekt eseménye', 'Frissített leírás',
+  '2026-09-15T08:30:00Z', '2026-09-15T09:30:00Z', 'Akadémia', null, true, 'Kiemelt közös időpont'
+);
+do $$
+begin
+  if (select status from public.event_participants where id = '61000000-0000-4000-8000-000000000001') <> 'pending' then
+    raise exception 'TC-EVT-005: a lényeges módosítás nem kért új választ';
+  end if;
+  if not exists (
+    select 1 from public.event_change_log
+    where event_id = '60000000-0000-4000-8000-000000000001' and requires_reconfirmation
+  ) then
+    raise exception 'TC-EVT-005: az újravisszaigazolás nem került az eseménytörténetbe';
+  end if;
+  begin
+    perform public.update_scheduled_event(
+      '60000000-0000-4000-8000-000000000002', 'Tiltott módosítás', null,
+      '2026-09-13T08:00:00Z', '2026-09-13T09:00:00Z', 'Tárgyaló', null, false, null
+    );
+    raise exception 'TC-EVT-AUTH: idegen esemény módosítható volt';
+  exception when insufficient_privilege then null;
+  end;
+end;
+$$;
+
+select public.cancel_scheduled_event(
+  '60000000-0000-4000-8000-000000000001', 'A program elmarad'
+);
+do $$
+begin
+  if (select status from public.events where id = '60000000-0000-4000-8000-000000000001') <> 'cancelled' then
+    raise exception 'TC-EVT-007: az esemény nem lemondott állapotú';
+  end if;
+end;
+$$;
+
 select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000001', true);
 select public.create_project('Létrehozási tesztprojekt', '30000000-0000-4000-8000-000000000003');
 do $$

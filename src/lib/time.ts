@@ -7,6 +7,10 @@ export function formatBudapestDateTime(value: string | Date): string {
   return formatInTimeZone(value, APP_TIME_ZONE, 'yyyy. MMMM d. HH:mm', { locale: hu })
 }
 
+export function formatBudapestInput(value: string | Date): string {
+  return formatInTimeZone(value, APP_TIME_ZONE, "yyyy-MM-dd'T'HH:mm")
+}
+
 export function budapestInputToUtc(value: string): string {
   return fromZonedTime(value, APP_TIME_ZONE).toISOString()
 }

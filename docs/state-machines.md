@@ -13,10 +13,10 @@ Az azonos állapotra váltás és minden más átmenet tiltott. A váltás tranz
 
 ## Feladat
 
-Az implementált fő út: `draft → assigned → accepted → in_progress → completed`, review-köteles feladatnál `in_progress → in_review → completed`. A felelős kiosztáskor elfogadhat, pontosítást kérhet vagy akadályt jelezhet. Blokkolás és feloldás indokolt; feloldáskor új határidő vagy a régi explicit megerősítése szükséges. Határidő-változás append-only előzményt és auditot ír. A kommunikációs vezető indoklással nyithat vissza befejezett feladatot.
+Az implementált fő út: `draft → assigned → accepted → in_progress → completed`, review-köteles feladatnál `in_progress → in_review → completed`. A felelős kiosztáskor elfogadhat, pontosítást kérhet vagy akadályt jelezhet. Blokkolás és feloldás indokolt; feloldáskor új határidő vagy a régi explicit megerősítése szükséges. Határidő-változás kötelező indokkal append-only előzményt és auditot ír. Átadáskor a korábbi felelős megmarad az előzményben, a feladat `assigned` állapotba és `pending` elfogadásra kerül. A Kanban csak a felelős számára és kizárólag a szerveroldalon is engedélyezett átmeneteket kínálja.
 
 ## Esemény
 
-Az első szelet a `draft → scheduled` ütemezést, a belső résztvevő meghívását és az `accepted` / `declined` / `maybe` választ valósítja meg. Minden válasznál megmarad, hogy ténylegesen ki válaszolt. A lemondás, átütemezés, automatikus `occurred` állapot és archiválás a következő I1/B szelet része.
+Az eseményfolyam a `draft → scheduled` ütemezést, a belső résztvevő meghívását, az `accepted` / `declined` / `maybe` választ, az ütemezett esemény szerkesztését és indokolt lemondását valósítja meg. Időpont, helyszín/online elérés vagy kötelező részvétel változása az összes válaszköteles résztvevőt `pending` állapotba állítja, míg a csak leírást érintő módosítás megtartja a válaszokat. Az időpontütközés figyelmeztet, de megerősítéssel menthető. Az automatikus `occurred` állapot és archiválás az I1/B3 része.
 
 A tartalom- és review-állapotgépek a forrásspecifikációk szerint az I2-ben készülnek el.

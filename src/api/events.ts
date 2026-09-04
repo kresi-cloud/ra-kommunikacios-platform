@@ -17,6 +17,9 @@ function rpcRow(value: unknown): Record<string, unknown> {
   return row
 }
 
+export type EventCapabilities = { canManage: boolean }
+export type UpdateEventInput = Pick<CalendarEvent, 'title' | 'description' | 'startsAt' | 'endsAt' | 'locationName' | 'onlineUrl' | 'isMandatory'> & { reason?: string | undefined }
+
 export async function listCalendarEvents(
   client: SupabaseClient,
   rangeStart: Date,
@@ -41,6 +44,43 @@ export async function getCalendarEvent(client: SupabaseClient, id: string): Prom
   const { data, error } = await client.from('events').select(eventColumns).eq('id', id).single()
   if (error) throw new Error('Az esemény betöltése nem sikerült.')
   return parseCalendarEventRow(data)
+}
+
+export async function getEventCapabilities(client: SupabaseClient, eventId: string): Promise<EventCapabilities> {
+  const { data, error } = await client.rpc('get_event_capabilities', { target_event_id: eventId }) as unknown as RpcResult
+  if (error) throw new Error('Az eseményműveletek jogosultságvizsgálata nem sikerült.')
+  return { canManage: Boolean(rpcRow(data).can_manage) }
+}
+
+export async function countEventConflicts(
+  client: SupabaseClient, eventId: string, startsAt: string, endsAt: string
+): Promise<number> {
+  const { data, error } = await client.rpc('count_event_conflicts', {
+    target_event_id: eventId, candidate_starts_at: startsAt, candidate_ends_at: endsAt
+  }) as unknown as RpcResult
+  if (error) throw new Error(error.message || 'Az ütközésvizsgálat nem sikerült.')
+  return typeof data === 'number' ? data : Number(data) || 0
+}
+
+export async function updateScheduledEvent(
+  client: SupabaseClient, eventId: string, input: UpdateEventInput
+): Promise<CalendarEvent> {
+  const { data, error } = await client.rpc('update_scheduled_event', {
+    target_event_id: eventId, event_title: input.title, event_description: input.description,
+    event_starts_at: input.startsAt, event_ends_at: input.endsAt,
+    event_location_name: input.locationName, event_online_url: input.onlineUrl,
+    event_is_mandatory: input.isMandatory, change_reason: input.reason || null
+  }) as unknown as RpcResult
+  if (error) throw new Error(error.message || 'Az esemény módosítása nem sikerült.')
+  return parseCalendarEventRow(rpcRow(data))
+}
+
+export async function cancelScheduledEvent(client: SupabaseClient, eventId: string, reason: string): Promise<CalendarEvent> {
+  const { data, error } = await client.rpc('cancel_scheduled_event', {
+    target_event_id: eventId, cancellation_reason: reason
+  }) as unknown as RpcResult
+  if (error) throw new Error(error.message || 'Az esemény lemondása nem sikerült.')
+  return parseCalendarEventRow(rpcRow(data))
 }
 
 export type CreateEventInput = {

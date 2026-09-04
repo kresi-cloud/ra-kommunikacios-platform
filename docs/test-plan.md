@@ -5,10 +5,10 @@
 | Réteg | Parancs | Fókusz |
 |---|---|---|
 | Lint és típus | `npm run lint`, `npm run typecheck` | statikus hibák, strict TypeScript |
-| Unit/komponens | `npm test` | konfiguráció, időzóna, projekt-/feladatlogika, űrlapvalidáció, Kanban, belépés, listák, naptári csoportosítás, kezdőlapi mutatók |
+| Unit/komponens | `npm test` | konfiguráció, időzóna, projekt-/feladatlogika, szerkesztési validáció, szabályozott Kanban drag-and-drop, ütközés-megerősítés, belépés, listák, naptári csoportosítás, kezdőlapi mutatók |
 | Build/PWA | `npm run build` | kiadható csomag és service worker |
 | Böngésző | `npm run test:e2e` | belépés, routing, reszponzív alap |
-| Adatbázis | `npm run test:db` | anonim tiltás, projekt-/feladat-/eseményszeparáció, technikai admin tiltása, feladatelfogadás, atomi eseménylétrehozás, részvételi válasz, foglaltság privacy |
+| Adatbázis | `npm run test:db` | anonim tiltás, projekt-/feladat-/eseményszeparáció, technikai admin tiltása, feladatelfogadás, határidő- és felelőselőzmény, atomi eseménylétrehozás, eseménymódosítás/válasz-reset/lemondás, részvételi válasz, foglaltság privacy |
 
 ## Belépési feltétel
 

@@ -5,9 +5,12 @@ const taskColumns = 'id,task_code,title,description,responsible_user_id,project_
 type RpcResult = { data: unknown; error: { message?: string } | null }
 
 function rpcRow(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Érvénytelen szerverválasz.')
-  return value as Record<string, unknown>
+  const row: unknown = Array.isArray(value) ? (value as unknown[])[0] : value
+  if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Érvénytelen szerverválasz.')
+  return row as Record<string, unknown>
 }
+
+export type TaskCapabilities = { canChangeDeadline: boolean; canReassign: boolean }
 
 export async function listOpenTasks(client: SupabaseClient): Promise<Task[]> {
   const { data, error } = await client
@@ -78,5 +81,32 @@ export async function transitionTask(
     confirm_existing_due: false
   }) as unknown as RpcResult
   if (error) throw new Error(error.message || 'Az állapotváltás nem sikerült.')
+  return parseTaskRow(rpcRow(data))
+}
+
+export async function getTaskCapabilities(client: SupabaseClient, taskId: string): Promise<TaskCapabilities> {
+  const { data, error } = await client.rpc('get_task_capabilities', { target_task_id: taskId }) as unknown as RpcResult
+  if (error) throw new Error('A feladatműveletek jogosultságvizsgálata nem sikerült.')
+  const row = rpcRow(data)
+  return { canChangeDeadline: Boolean(row.can_change_deadline), canReassign: Boolean(row.can_reassign) }
+}
+
+export async function changeTaskDeadline(
+  client: SupabaseClient, taskId: string, dueAt: string | null, reason: string
+): Promise<Task> {
+  const { data, error } = await client.rpc('change_task_deadline', {
+    target_task_id: taskId, target_due_at: dueAt, change_reason: reason
+  }) as unknown as RpcResult
+  if (error) throw new Error(error.message || 'A határidő módosítása nem sikerült.')
+  return parseTaskRow(rpcRow(data))
+}
+
+export async function reassignTask(
+  client: SupabaseClient, taskId: string, responsibleUserId: string, reason: string
+): Promise<Task> {
+  const { data, error } = await client.rpc('reassign_task', {
+    target_task_id: taskId, new_responsible_user_id: responsibleUserId, transfer_reason: reason
+  }) as unknown as RpcResult
+  if (error) throw new Error(error.message || 'A feladat átadása nem sikerült.')
   return parseTaskRow(rpcRow(data))
 }

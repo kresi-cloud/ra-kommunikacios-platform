@@ -15,7 +15,10 @@ Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supab
 - egyfelelős feladatmodell, kiosztás/elfogadás, blokkolás, review, határidő-előzmény és auditált RPC-k;
 - önálló vagy projektes események, belső meghívás és naplózott részvételi válasz;
 - feladatlétrehozás, lista/Kanban, feladatadatlap és a felelős engedélyezett állapotváltásai;
+- indokolt feladathatáridő-módosítás és feladatátadás új felelősi elfogadással;
 - atomi eseménylétrehozás, budapesti időzónás agenda, eseményadatlap, meghívás és részvételi válasz;
+- esemény átütemezés ütközésjelzéssel, lényeges változásnál válasz-reset, valamint indokolt lemondás;
+- szabályozott Kanban drag-and-drop, amely csak engedélyezett felelősi átmenetet indít;
 - saját „Nem elérhető” idősávok és privacy-safe csapatfoglaltság;
 - élő kezdőlapi mutatók;
 - RLS-, böngésző- és alkalmazástesztek, GitHub Actions munkafolyamat.
