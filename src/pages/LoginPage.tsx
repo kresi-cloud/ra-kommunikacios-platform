@@ -38,8 +38,11 @@ export function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-card" aria-labelledby="login-title">
-        <div className="login-brand"><span className="brand-mark">RA</span></div>
-        <p className="eyebrow">Rátgéber Akadémia</p>
+        <div className="login-brand">
+          <img src="/brand/ratgeber-akademia-logo.png" alt="Rátgéber Kosárlabda Akadémia" />
+          <span>Belső kommunikációs rendszer</span>
+        </div>
+        <p className="eyebrow">Rátgéber Kosárlabda Akadémia</p>
         <h1 id="login-title">Kommunikációs platform</h1>
         <p className="lead">Lépj be a meghívásodhoz tartozó fiókkal.</p>
 

@@ -15,8 +15,13 @@ export function AppShell() {
     <div className="app-shell">
       <aside className="sidebar" aria-label="Fő navigáció">
         <div className="brand" aria-label="RA Kommunikációs Platform">
-          <span className="brand-mark">RA</span>
-          <span>Kommunikáció</span>
+          <span className="brand-logo-plate" aria-hidden="true">
+            <img src="/brand/ratgeber-akademia-logo.png" alt="" />
+          </span>
+          <span className="brand-copy">
+            <strong>Kommunikáció</strong>
+            <small>belső platform</small>
+          </span>
         </div>
         <nav>
           {items.map((item) => (
@@ -29,7 +34,10 @@ export function AppShell() {
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <span>Belső munkatér</span>
+          <span className="topbar-title">
+            <small>Rátgéber Kosárlabda Akadémia</small>
+            <strong>Belső munkatér</strong>
+          </span>
           <button className="icon-button" aria-label="Értesítések">0</button>
         </header>
         <Outlet />
