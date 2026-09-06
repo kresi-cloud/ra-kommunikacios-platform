@@ -1,0 +1,40 @@
+name: Supabase PROD telepítés
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Élesítéshez írd be: DEPLOY_PRODUCTION"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Éles adatbázis migrálása
+    if: ${{ inputs.confirmation == 'DEPLOY_PRODUCTION' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Éles adatbázis-kapcsolat ellenőrzése
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+        run: test -n "$SUPABASE_DB_URL"
+      - name: Migrációk telepítése az éles adatbázisba
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --include-all
+      - name: RLS adatbázistesztek
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+        run: npm run test:db
