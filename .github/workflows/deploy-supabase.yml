@@ -1,9 +1,9 @@
-name: Supabase pilot telepítés
+name: Supabase TEST telepítés
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [develop]
     paths:
       - .github/workflows/deploy-supabase.yml
       - supabase/migrations/**
@@ -11,23 +11,29 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: supabase-test
+  cancel-in-progress: false
+
 jobs:
   migrate:
+    name: Tesztadatbázis migrálása
     runs-on: ubuntu-latest
+    environment: test
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - name: Adatbázis-kapcsolat ellenőrzése
+      - name: Tesztadatbázis-kapcsolat ellenőrzése
         env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_TEST_DB_URL || secrets.SUPABASE_DB_URL }}
         run: test -n "$SUPABASE_DB_URL"
-      - name: Migrációk telepítése
+      - name: Migrációk telepítése a tesztadatbázisba
         env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_TEST_DB_URL || secrets.SUPABASE_DB_URL }}
         run: supabase db push --db-url "$SUPABASE_DB_URL" --include-all
       - name: RLS adatbázistesztek
         env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_TEST_DB_URL || secrets.SUPABASE_DB_URL }}
         run: npm run test:db
