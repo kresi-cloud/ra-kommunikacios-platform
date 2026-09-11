@@ -1,11 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
+import { NotificationBell } from './NotificationBell'
 
 const items = [
   { to: '/', label: 'Kezdőlap' },
   { to: '/feladatok', label: 'Feladatok' },
   { to: '/naptar', label: 'Naptár' },
-  { to: '/projektek', label: 'Projektek' }
+  { to: '/projektek', label: 'Projektek' },
+  { to: '/ertesitesek', label: 'Értesítések' }
 ]
 
 export function AppShell() {
@@ -38,7 +40,7 @@ export function AppShell() {
             <small>Rátgéber Kosárlabda Akadémia</small>
             <strong>Belső munkatér</strong>
           </span>
-          <button className="icon-button" aria-label="Értesítések">0</button>
+          <NotificationBell />
         </header>
         <Outlet />
       </div>
