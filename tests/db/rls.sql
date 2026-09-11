@@ -319,7 +319,7 @@ $$;
 select public.create_project('Létrehozási tesztprojekt', '30000000-0000-4000-8000-000000000003');
 select public.create_task(
   'Emlékeztető tesztfeladat', '30000000-0000-4000-8000-000000000003',
-  '40000000-0000-4000-8000-000000000001', null, now() + interval '90 minutes', 'normal', false, null, true, null
+  '40000000-0000-4000-8000-000000000001', null, now() + interval '10 hours', 'normal', false, null, true, null
 );
 do $$
 begin
@@ -385,18 +385,27 @@ begin
   if reminder_task_id is null then
     raise exception 'TC-NOT-006: hiányzik az emlékeztető tesztfeladat';
   end if;
+  -- TC-NOT-006: 10 órával a határidő előtt létrehozott feladatnál a 24 órás küszöb
+  -- már elmúlt (nem készül), a 2 órás küszöb a jövőben van (egyszer készül).
   first_run := private.run_task_deadline_notifications(reference_time);
+  if exists (
+    select 1 from public.notifications
+    where event_type in ('task.reminder_24h', 'task.reminder_2h') and entity_id = reminder_task_id
+  ) then
+    raise exception 'TC-NOT-006: idő előtti emlékeztető készült';
+  end if;
+  perform private.run_task_deadline_notifications(reference_time + interval '8 hours 30 minutes');
   if exists (select 1 from public.notifications where event_type = 'task.reminder_24h' and entity_id = reminder_task_id) then
-    raise exception 'TC-NOT-006: 24 órás emlékeztető készült egy 90 perces feladathoz';
+    raise exception 'TC-NOT-006: 24 órás emlékeztető készült egy 10 órás feladathoz';
   end if;
   if (select count(*) from public.notifications where event_type = 'task.reminder_2h' and entity_id = reminder_task_id) <> 1 then
     raise exception 'TC-NOT-006: a 2 órás emlékeztető hiányzik';
   end if;
-  second_run := private.run_task_deadline_notifications(reference_time);
+  second_run := private.run_task_deadline_notifications(reference_time + interval '8 hours 30 minutes');
   if second_run <> 0 then
     raise exception 'TC-NOT-007: az ismételt futás duplikált értesítést adott';
   end if;
-  perform private.run_task_deadline_notifications(reference_time + interval '2 hours');
+  perform private.run_task_deadline_notifications(reference_time + interval '10 hours');
   if (select count(*) from public.notifications where event_type = 'task.due' and entity_id = reminder_task_id) <> 2 then
     raise exception 'TC-NOT-DUE: az esedékességi értesítés nem jutott el a felelősnek és a projektgazdának';
   end if;
