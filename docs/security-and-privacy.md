@@ -9,6 +9,8 @@
 - az auditnapló append-only a kliens számára;
 - minden storage bucket privát, klienspolicy nélkül;
 - a frontend csak Supabase anon kulcsot használ;
+- értesítés csak szerveroldali kódból keletkezik, a `body_safe` szöveg érzékeny személyes adatot nem tartalmazhat, mert külső csatornán is megjelenhet;
+- a kritikus, biztonsági, fiók- és jogosultsági értesítés külső csatornája nem kapcsolható ki;
 - a konfiguráció hiányát az alkalmazás biztonságosan jelzi.
 
 ## Üzembe állítás előtt

@@ -54,6 +54,10 @@ insert into public.events(
   ('60000000-0000-4000-8000-000000000002', 'EVENT-B', 'B projekt eseménye', 'meeting',
     '30000000-0000-4000-8000-000000000003', '40000000-0000-4000-8000-000000000002',
     '2026-09-13T08:00:00Z', '2026-09-13T09:00:00Z', 'Tárgyaló', 'scheduled',
+    '30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001'),
+  ('60000000-0000-4000-8000-000000000003', 'EVENT-C', 'Lezárandó esemény', 'meeting',
+    '30000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-000000000001',
+    '2026-09-01T08:00:00Z', '2026-09-01T09:00:00Z', 'Tárgyaló', 'scheduled',
     '30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001')
 on conflict (id) do nothing;
 
@@ -79,8 +83,8 @@ begin
   if (select count(*) from public.tasks) <> 1 then
     raise exception 'TC-RLS-TASK: a projektgazda nem pontosan a saját projektfeladatát látja';
   end if;
-  if (select count(*) from public.events) <> 1 then
-    raise exception 'TC-RLS-EVENT: a projektgazda nem pontosan a saját projekteseményét látja';
+  if (select count(*) from public.events) <> 2 then
+    raise exception 'TC-RLS-EVENT: a projektgazda nem pontosan a saját projekteseményeit látja';
   end if;
 end;
 $$;
@@ -187,6 +191,16 @@ begin
   if (select public.count_event_conflicts('60000000-0000-4000-8000-000000000001', '2026-09-15T08:30:00Z', '2026-09-15T09:30:00Z')) < 1 then
     raise exception 'TC-EVT-008: az ütközésvizsgálat nem jelezte a foglaltságot';
   end if;
+  if not exists (
+    select 1 from public.notifications
+    where event_type = 'event.response' and entity_id = '60000000-0000-4000-8000-000000000001'
+      and recipient_user_id = '30000000-0000-4000-8000-000000000002'
+  ) then
+    raise exception 'TC-EVT-003-NOT: a részvételi válasz nem értesítette az esemény felelősét';
+  end if;
+  if exists (select 1 from public.notifications where recipient_user_id <> auth.uid()) then
+    raise exception 'TC-NOT-RLS: idegen értesítés látható';
+  end if;
 end;
 $$;
 
@@ -227,8 +241,86 @@ begin
 end;
 $$;
 
+-- Értesítések a címzett (Munkatárs B) oldaláról
+select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000003', true);
+do $$
+declare
+  reassigned_id uuid;
+  unread_before integer;
+  unread_after integer;
+begin
+  select id into reassigned_id from public.notifications
+  where event_type = 'task.reassigned' and entity_id = '50000000-0000-4000-8000-000000000001'
+    and recipient_user_id = '30000000-0000-4000-8000-000000000003';
+  if reassigned_id is null then
+    raise exception 'TC-TASK-011-NOT: az átadás nem értesítette az új felelőst';
+  end if;
+  if not exists (
+    select 1 from public.notifications
+    where event_type = 'event.material_change' and entity_id = '60000000-0000-4000-8000-000000000001'
+      and deliver_after = created_at
+  ) then
+    raise exception 'TC-EVT-005-NOT: a lényeges eseménymódosítás nem azonnali értesítést adott';
+  end if;
+  if not exists (
+    select 1 from public.notifications
+    where event_type = 'event.cancelled' and entity_id = '60000000-0000-4000-8000-000000000001'
+  ) then
+    raise exception 'TC-EVT-007-NOT: a lemondás nem értesítette a meghívottat';
+  end if;
+  if exists (select 1 from public.notifications where recipient_user_id <> auth.uid()) then
+    raise exception 'TC-NOT-RLS: idegen értesítés látható';
+  end if;
+  if (select count(*) from public.notification_deliveries where notification_id = reassigned_id) <> 3 then
+    raise exception 'TC-NOT-DELIVERY: hiányzik a csatornánkénti kézbesítési sor';
+  end if;
+
+  unread_before := public.count_unread_notifications();
+  perform public.mark_notification_read(reassigned_id);
+  unread_after := public.count_unread_notifications();
+  if unread_after <> unread_before - 1
+    or (select read_status from public.notifications where id = reassigned_id) <> 'read' then
+    raise exception 'TC-NOT-READ: az olvasottá jelölés nem működik';
+  end if;
+  begin
+    update public.notifications set read_status = 'read', read_at = now() where recipient_user_id = auth.uid();
+    raise exception 'TC-NOT-WRITE: közvetlen értesítésírás engedélyezett';
+  exception when insufficient_privilege then null;
+  end;
+
+  perform public.set_notification_preference('task.completed', false, true);
+  if (select email_enabled from public.notification_preferences where event_type = 'task.completed') then
+    raise exception 'TC-NOT-PREF: a normál értesítési beállítás nem mentődött';
+  end if;
+  begin
+    perform public.set_notification_preference('security.login_failed', false, false);
+    raise exception 'TC-NOT-010: kötelező értesítés kikapcsolható volt';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.disconnect_google_calendar();
+    raise exception 'TC-INT-005: nem létező naptárkapcsolat visszavonható volt';
+  exception when no_data_found then null;
+  end;
+end;
+$$;
+
 select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000001', true);
+do $$
+begin
+  if not exists (
+    select 1 from public.notifications
+    where event_type = 'task.accepted' and entity_id = '50000000-0000-4000-8000-000000000001'
+  ) then
+    raise exception 'TC-TASK-003-NOT: az elfogadás nem értesítette a kiosztót';
+  end if;
+end;
+$$;
 select public.create_project('Létrehozási tesztprojekt', '30000000-0000-4000-8000-000000000003');
+select public.create_task(
+  'Emlékeztető tesztfeladat', '30000000-0000-4000-8000-000000000003',
+  '40000000-0000-4000-8000-000000000001', null, now() + interval '10 hours', 'normal', false, null, true, null
+);
 do $$
 begin
   if (select count(*) from public.projects where title = 'Létrehozási tesztprojekt') <> 1 then
@@ -246,10 +338,129 @@ begin
   if exists (select 1 from public.tasks) or exists (select 1 from public.events) then
     raise exception 'TC-RLS-009B: a technikai admin feladatot vagy eseményt lát';
   end if;
+  if exists (select 1 from public.notifications) then
+    raise exception 'TC-RLS-009C: a technikai admin idegen értesítést lát';
+  end if;
 end;
 $$;
 
+-- Háttérfolyamatok rendszerkontextusban (nincs bejelentkezett felhasználó)
 reset role;
+select set_config('request.jwt.claim.sub', '', true);
+do $$
+declare
+  reminder_task_id uuid;
+  first_run integer;
+  second_run integer;
+  stale_id uuid;
+  critical_id uuid;
+  reference_time timestamptz := now();
+begin
+  first_run := private.close_occurred_events('2026-09-02T00:00:00Z');
+  if (select status from public.events where id = '60000000-0000-4000-8000-000000000003') <> 'occurred' then
+    raise exception 'TC-EVT-OCCURRED: a lejárt ütemezett esemény nem került Megtörtént állapotba';
+  end if;
+  second_run := private.close_occurred_events('2026-09-02T00:00:00Z');
+  if second_run <> 0 or (
+    select count(*) from public.notifications
+    where event_type = 'event.occurred' and entity_id = '60000000-0000-4000-8000-000000000003'
+  ) <> 1 then
+    raise exception 'TC-INT-006: az ismételt eseménylezárás nem idempotens';
+  end if;
+
+  if private.budapest_delivery_time('2026-09-10T17:30:00Z', 'normal', false) <> '2026-09-10T17:30:00Z' then
+    raise exception 'TC-NOT-001: a 19:30-as normál értesítés nem azonnali';
+  end if;
+  if private.budapest_delivery_time('2026-09-10T18:01:00Z', 'normal', false) <> '2026-09-11T06:00:00Z' then
+    raise exception 'TC-NOT-002: a 20:01-es normál értesítés nem a következő 08:00-ra halasztódik';
+  end if;
+  if private.budapest_delivery_time('2026-09-11T00:00:00Z', 'critical', false) <> '2026-09-11T00:00:00Z' then
+    raise exception 'TC-NOT-003: a kritikus értesítés nem azonnali';
+  end if;
+  if private.budapest_delivery_time('2026-10-24T20:30:00Z', 'normal', false) <> '2026-10-25T07:00:00Z' then
+    raise exception 'TC-NOT-013: az óraátállítás után a helyi 08:00 hibás';
+  end if;
+
+  select id into reminder_task_id from public.tasks where title = 'Emlékeztető tesztfeladat';
+  if reminder_task_id is null then
+    raise exception 'TC-NOT-006: hiányzik az emlékeztető tesztfeladat';
+  end if;
+  -- TC-NOT-006: 10 órával a határidő előtt létrehozott feladatnál a 24 órás küszöb
+  -- már elmúlt (nem készül), a 2 órás küszöb a jövőben van (egyszer készül).
+  first_run := private.run_task_deadline_notifications(reference_time);
+  if exists (
+    select 1 from public.notifications
+    where event_type in ('task.reminder_24h', 'task.reminder_2h') and entity_id = reminder_task_id
+  ) then
+    raise exception 'TC-NOT-006: idő előtti emlékeztető készült';
+  end if;
+  perform private.run_task_deadline_notifications(reference_time + interval '8 hours 30 minutes');
+  if exists (select 1 from public.notifications where event_type = 'task.reminder_24h' and entity_id = reminder_task_id) then
+    raise exception 'TC-NOT-006: 24 órás emlékeztető készült egy 10 órás feladathoz';
+  end if;
+  if (select count(*) from public.notifications where event_type = 'task.reminder_2h' and entity_id = reminder_task_id) <> 1 then
+    raise exception 'TC-NOT-006: a 2 órás emlékeztető hiányzik';
+  end if;
+  second_run := private.run_task_deadline_notifications(reference_time + interval '8 hours 30 minutes');
+  if second_run <> 0 then
+    raise exception 'TC-NOT-007: az ismételt futás duplikált értesítést adott';
+  end if;
+  perform private.run_task_deadline_notifications(reference_time + interval '10 hours');
+  if (select count(*) from public.notifications where event_type = 'task.due' and entity_id = reminder_task_id) <> 2 then
+    raise exception 'TC-NOT-DUE: az esedékességi értesítés nem jutott el a felelősnek és a projektgazdának';
+  end if;
+
+  stale_id := private.enqueue_notification(
+    '30000000-0000-4000-8000-000000000003', 'task.completed', 'Régi normál értesítés', null,
+    'normal', 'task', reminder_task_id, '40000000-0000-4000-8000-000000000001', 'db-test:stale', false, false, false
+  );
+  critical_id := private.enqueue_notification(
+    '30000000-0000-4000-8000-000000000003', 'task.blocked', 'Régi kritikus értesítés', null,
+    'critical', 'task', reminder_task_id, '40000000-0000-4000-8000-000000000001', 'db-test:critical', false, false, false
+  );
+  if stale_id is null or critical_id is null then
+    raise exception 'TC-NOT-ENQUEUE: a rendszerkontextusú beírás nem működik';
+  end if;
+  if (select status from public.notification_deliveries where notification_id = stale_id and channel = 'email') <> 'skipped'
+    or (select status from public.notification_deliveries where notification_id = stale_id and channel = 'push') <> 'queued' then
+    raise exception 'TC-NOT-PREF-DELIVERY: a felhasználói beállítás nem érvényesült a külső csatornán';
+  end if;
+  update public.notifications set created_at = now() - interval '8 days' where id in (stale_id, critical_id);
+  perform private.archive_stale_notifications(now());
+  if (select archived_at from public.notifications where id = stale_id) is null then
+    raise exception 'TC-NOT-008: a 7 napos normál értesítés nem archiválódott';
+  end if;
+  if (select archived_at from public.notifications where id = critical_id) is not null then
+    raise exception 'TC-NOT-009: a kritikus olvasatlan értesítés archiválódott';
+  end if;
+
+  perform private.sync_google_busy_blocks(
+    '30000000-0000-4000-8000-000000000003',
+    '[{"starts_at":"2026-09-18T08:00:00Z","ends_at":"2026-09-18T09:00:00Z","hash":"h1"},{"starts_at":"2026-09-18T10:00:00Z","ends_at":"2026-09-18T11:00:00Z","hash":"h2"}]'::jsonb,
+    'Munkanaptár'
+  );
+  if (select count(*) from public.availability_blocks where user_id = '30000000-0000-4000-8000-000000000003' and source = 'google' and cancelled_at is null) <> 2 then
+    raise exception 'TC-INT-004: a Google-foglaltság nem került be';
+  end if;
+  perform private.sync_google_busy_blocks(
+    '30000000-0000-4000-8000-000000000003',
+    '[{"starts_at":"2026-09-18T08:00:00Z","ends_at":"2026-09-18T09:00:00Z","hash":"h1"}]'::jsonb,
+    null
+  );
+  if (select count(*) from public.availability_blocks where user_id = '30000000-0000-4000-8000-000000000003' and source = 'google' and cancelled_at is null) <> 1 then
+    raise exception 'TC-INT-004: a hiányzó hash foglaltsága nem vonódott vissza';
+  end if;
+  if (select status from public.calendar_connections where user_id = '30000000-0000-4000-8000-000000000003') <> 'connected' then
+    raise exception 'TC-INT-004: a naptárkapcsolat állapota hibás';
+  end if;
+
+  perform private.run_notification_jobs(now());
+  if (select count(*) from public.job_runs where status = 'succeeded') < 4 then
+    raise exception 'TC-INT-007: a háttérfeladat-futás nem naplózott sikeres futást';
+  end if;
+end;
+$$;
+
 set local role anon;
 do $$
 begin
@@ -262,6 +473,12 @@ begin
   begin
     perform 1 from public.tasks limit 1;
     raise exception 'TC-RLS-001B: az anonim szerep feladatot kérdezhetett le';
+  exception when insufficient_privilege then
+    null;
+  end;
+  begin
+    perform 1 from public.notifications limit 1;
+    raise exception 'TC-RLS-001C: az anonim szerep értesítést kérdezhetett le';
   exception when insufficient_privilege then
     null;
   end;

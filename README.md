@@ -21,6 +21,9 @@ Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supab
 - szabályozott Kanban drag-and-drop, amely csak engedélyezett felelősi átmenetet indít;
 - saját „Nem elérhető” idősávok és privacy-safe csapatfoglaltság;
 - élő kezdőlapi mutatók;
+- értesítési outbox: a feladat- és esemény-RPC-k ugyanabban a tranzakcióban, idempotens kulccsal írják az alkalmazáson belüli értesítést; 08:00–20:00 kézbesítési ablak Europe/Budapest szerint, olvasottság, számláló, e-mail/push beállítás a kötelező típusok védelmével;
+- időzített automatizmusok: 24 és 2 órás határidő-emlékeztető, esedékesség, késedelem, eseménylezárás „Megtörtént” állapotba, 7 napos archiválás, 1 éves megőrzés, naplózott háttérfutás;
+- Google busy-sync alap: kapcsolatállapot, privacy-safe foglaltság-szinkron RPC és felhasználói visszavonás;
 - RLS-, böngésző- és alkalmazástesztek, GitHub Actions munkafolyamat.
 
 ## Helyi indítás

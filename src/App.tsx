@@ -6,6 +6,7 @@ import { AppShell } from './components/AppShell'
 import { DashboardPage } from './pages/DashboardPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { LoginPage } from './pages/LoginPage'
+import { NotificationsPage } from './pages/NotificationsPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { TasksPage } from './pages/TasksPage'
 import { TaskDetailPage } from './pages/TaskDetailPage'
@@ -28,6 +29,7 @@ export function App() {
                 <Route path="feladatok/:taskId" element={<TaskDetailPage />} />
                 <Route path="naptar" element={<CalendarPage />} />
                 <Route path="naptar/:eventId" element={<EventDetailPage />} />
+                <Route path="ertesitesek" element={<NotificationsPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
