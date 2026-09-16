@@ -8,7 +8,7 @@ export type NotificationPriority = (typeof notificationPriorities)[number]
 export const notificationSchema = z.object({
   id: z.uuid(),
   recipientUserId: z.uuid(),
-  eventType: z.string().regex(/^[a-z_]+\.[a-z_]+$/),
+  eventType: z.string().regex(/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/),
   title: z.string().trim().min(1).max(250),
   bodySafe: z.string().max(2000).nullable(),
   priority: z.enum(notificationPriorities),

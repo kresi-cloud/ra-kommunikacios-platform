@@ -14,7 +14,7 @@ create type public.calendar_connection_status as enum ('connected', 'error', 're
 create table public.notifications (
   id uuid primary key default gen_random_uuid(),
   recipient_user_id uuid not null references public.profiles(id) on delete restrict,
-  event_type text not null check (event_type ~ '^[a-z_]+\.[a-z_]+$'),
+  event_type text not null check (event_type ~ '^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$'),
   title text not null check (char_length(title) between 1 and 250),
   body_safe text check (body_safe is null or char_length(body_safe) <= 2000),
   priority public.notification_priority not null default 'normal',
@@ -58,7 +58,7 @@ create index notification_deliveries_queue_idx
 
 create table public.notification_preferences (
   user_id uuid not null references public.profiles(id) on delete cascade,
-  event_type text not null check (event_type ~ '^[a-z_]+\.[a-z_]+$'),
+  event_type text not null check (event_type ~ '^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$'),
   email_enabled boolean not null default true,
   push_enabled boolean not null default true,
   updated_at timestamptz not null default now(),
@@ -1052,7 +1052,7 @@ begin
   if not private.is_active_user() then
     raise exception 'Nincs aktív felhasználói hozzáférés.' using errcode = '42501';
   end if;
-  if target_event_type !~ '^[a-z_]+\.[a-z_]+$' then
+  if target_event_type !~ '^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$' then
     raise exception 'Érvénytelen értesítéstípus.' using errcode = '22023';
   end if;
   if private.is_mandatory_notification(target_event_type, 'normal') and not (enable_email and enable_push) then
