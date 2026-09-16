@@ -1,0 +1,33 @@
+name: Pilot-ágensek (TEST)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: Napi pilot-forgatókönyv
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Pilot-forgatókönyv futtatása
+        env:
+          PILOT_SUPABASE_URL: ${{ secrets.PILOT_SUPABASE_URL }}
+          PILOT_SUPABASE_ANON_KEY: ${{ secrets.PILOT_SUPABASE_ANON_KEY }}
+          PILOT_LEAD_EMAIL: ${{ secrets.PILOT_LEAD_EMAIL }}
+          PILOT_LEAD_PASSWORD: ${{ secrets.PILOT_LEAD_PASSWORD }}
+          PILOT_OWNER_EMAIL: ${{ secrets.PILOT_OWNER_EMAIL }}
+          PILOT_OWNER_PASSWORD: ${{ secrets.PILOT_OWNER_PASSWORD }}
+          PILOT_STAFF_EMAIL: ${{ secrets.PILOT_STAFF_EMAIL }}
+          PILOT_STAFF_PASSWORD: ${{ secrets.PILOT_STAFF_PASSWORD }}
+          PILOT_ADMIN_EMAIL: ${{ secrets.PILOT_ADMIN_EMAIL }}
+          PILOT_ADMIN_PASSWORD: ${{ secrets.PILOT_ADMIN_PASSWORD }}
+        run: npm run pilot:agents

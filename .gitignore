@@ -6,6 +6,8 @@ test-results
 .env.local
 .env.*.local
 !.env.example
+.env.pilot-agents
+!.env.pilot-agents.example
 .DS_Store
 *.log
 .supabase
