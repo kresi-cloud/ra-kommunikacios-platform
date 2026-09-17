@@ -62,21 +62,61 @@ funkciónként, teljes vertikális szeletekben halad:
 | Projektek (I1/A megfelelője) | **Kész az új háttérrendszeren**: `server/services/projects.ts`, `server/routes/projects.ts` |
 | Feladatok, események, naptár (I1/B1–B2) | **Még a Supabase-en fut**, portolás folyamatban |
 | Értesítések, háttérfeladatok (I1/B3) | **Még a Supabase-en fut**, portolás folyamatban |
-| Frontend (`src/`) | **Még nincs átkötve** az új háttérrendszerre; a bejelentkezés és a projektoldal átkötése a következő lépés |
+| Frontend: bejelentkezés (`AuthProvider`, `LoginPage`) | **Átkötve**: `src/lib/auth-client.ts` (better-auth React kliens), `session.user.{id,email}` alakja szándékosan változatlan, hogy a még nem portolt oldalak ne törjenek |
+| Frontend: projektoldal (`ProjectsPage`) | **Átkötve**: `src/api/projects.ts` fetch-alapú kliensre, listázás és létrehozás is működik |
+| Frontend: feladatok, naptár, értesítések | **Még nincs átkötve**; a `TasksPage`/`CalendarPage` projekt-legördülője már az új végpontot hívja (`listProjects()`), a feladat-/esemény-/értesítésadat továbbra is a Supabase-klienstől jön |
 
-A `src/` alatti felület egyelőre változatlanul a Supabase-kliensen keresztül
-működik – ez a réteg csak a portolás előrehaladtával kerül át fokozatosan
-a `server/`-en keresztüli hívásokra. A `supabase/migrations/` és a
-`docs/permissions-and-rls.md` régi tartalma referenciaként marad addig, amíg
-minden funkció át nem kerül; ezután archiválható vagy törölhető.
+A bejelentkezés és a projektoldal átkötése után a feladat-, esemény- és
+értesítésoldalak a Supabase-kliensen keresztül próbálnak adatot lekérni, de
+munkamenet (Supabase Auth session) híján ez RLS-hibát ad – ez a jelenlegi,
+átmeneti állapotban várt, dokumentált viselkedés, nem hiba. Ezek az oldalak
+a saját portolásukig a meglévő általános hibabannereket mutatják ("A
+feladatok betöltése nem sikerült." stb.), ami nem egyértelmű "átállás alatt"
+üzenet – ezt érdemes finomítani, ha ez zavaró a fejlesztés közben.
+
+A `supabase/migrations/` és a `docs/permissions-and-rls.md` régi tartalma
+referenciaként marad addig, amíg minden funkció át nem kerül; ezután
+archiválható vagy törölhető.
+
+### Bootstrap: az első fiók létrehozása
+
+Nyilvános regisztráció nincs (`emailAndPassword.disableSignUp: true`), ezért
+kézzel kell létrehozni az első belépő fiókot:
+
+```bash
+npm run auth:bootstrap-admin -- --email=lead@example.test --password=... --name="Kommunikációs vezető"
+```
+
+Ez pontosan a better-auth saját `/sign-up/email` végpontjának lépéseit
+követi (`server/scripts/bootstrap-admin.ts`), és rögtön Kommunikációs vezető
+szerepet ad a fióknak. Csak fejlesztéshez/kezdeti üzembe helyezéshez való;
+további felhasználók meghívásos folyamata (a korábbi `invitations` tábla
+megfelelője) még nincs portolva.
+
+### Ismert buktató: helyi porton futó fejlesztői szerver és a CSRF-origin-ellenőrzés
+
+A better-auth alapból elutasítja azt a kérést, amelynek `Origin` fejléce
+nem szerepel a `trustedOrigins` listában (CSRF-védelem). Mivel a helyi Vite
+dev szerver portja gépenként/eszközönként eltérhet az alapértelmezett
+5173-tól (lásd a `vite.config.ts` `PORT`/`autoPort` megjegyzését), a
+`server/auth.ts` egy `http://localhost:*` mintát enged be `trustedOrigins`-ként,
+amíg nincs explicit `BETTER_AUTH_URL` megadva. Ez a minta kizárólag
+localhost-originokra illeszkedik, külső hosztra nem – élesben mindig
+állíts be konkrét `BETTER_AUTH_URL`-t.
 
 ## Fejlesztői munkafolyamat az új háttérrendszerhez
 
 ```bash
 cp .env.example .env.local   # tölts ki legalább egy BETTER_AUTH_SECRET-et
+npm run dev                  # Vite + Hono egy folyamatban (server/index.ts); a migrációkat automatikusan alkalmazza
+npm run auth:bootstrap-admin -- --email=... --password=... --name="..."   # az első fiók, lásd lent
+```
+
+Sémaváltozás után (`server/db/schema.ts` vagy `server/auth.ts` módosítása):
+
+```bash
 npm run auth:generate        # better-auth séma frissítése auth.ts változás után
-npm run db:generate          # SQL-migráció generálása sémaváltozás után
-npm run dev                  # Vite + Hono egy folyamatban (server/index.ts)
+npm run db:generate          # SQL-migráció generálása a teljes sémából
 ```
 
 A `npm run db:migrate` parancs (vagy a szerver induláskor automatikusan)

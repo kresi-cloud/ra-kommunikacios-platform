@@ -66,19 +66,24 @@ export function canTransitionProject(
   )
 }
 
+/**
+ * A saját Hono API (server/routes/projects.ts) a Drizzle-séma camelCase
+ * mezőnevein adja vissza a projektet, ezért itt – a korábbi Supabase-sortól
+ * eltérően – nincs snake_case-ről való átalakítás.
+ */
 export function parseProjectRow(row: Record<string, unknown>): Project {
   return projectSchema.parse({
     id: row.id,
-    projectCode: row.project_code,
+    projectCode: row.projectCode,
     title: row.title,
     summary: row.summary ?? null,
     objective: row.objective ?? null,
-    ownerUserId: row.owner_user_id,
-    startsOn: row.starts_on ?? null,
-    endsOn: row.ends_on ?? null,
+    ownerUserId: row.ownerUserId,
+    startsOn: row.startsOn ?? null,
+    endsOn: row.endsOn ?? null,
     status: row.status,
-    seasonId: row.season_id ?? null,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
+    seasonId: row.seasonId ?? null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt
   })
 }

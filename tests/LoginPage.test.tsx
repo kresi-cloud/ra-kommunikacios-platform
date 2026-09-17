@@ -11,8 +11,9 @@ describe('LoginPage', () => {
     expect(screen.getByText(/Nyilvános regisztráció nincs/)).toBeInTheDocument()
   })
 
-  it('konfiguráció nélkül nem engedi elküldeni a belépést', () => {
+  it('a saját háttérrendszer mindig elérhető, ezért a belépés alapból engedélyezett', () => {
     render(<MemoryRouter><AuthProvider><LoginPage /></AuthProvider></MemoryRouter>)
-    expect(screen.getByRole('button', { name: /^Belépés$/ })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^Belépés$/ })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: /Google-fiókkal/ })).not.toBeDisabled()
   })
 })

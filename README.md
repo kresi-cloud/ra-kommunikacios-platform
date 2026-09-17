@@ -5,8 +5,8 @@ Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript alapon. A
 ## Elkészült
 
 - szigorú TypeScript-, lint-, unit- és build-ellenőrzés;
-- **új háttérrendszer** (`server/`): SQLite + Drizzle + Hono + better-auth, saját jogosultsági réteg (`server/authz.ts`) a korábbi RLS/RPC-logika alkalmazáskódos megfelelőjeként; azonosítás és projektmodul már ezen fut, tesztelve (`server/*.test.ts`);
-- Supabase Auth alapú belépés Google és e-mail/jelszó útvonalon, nyilvános regisztráció nélkül *(a feladat-, esemény- és értesítésmodulnál egyelőre még ez fut, lásd fent)*;
+- **új háttérrendszer** (`server/`): SQLite + Drizzle + Hono + better-auth, saját jogosultsági réteg (`server/authz.ts`) a korábbi RLS/RPC-logika alkalmazáskódos megfelelőjeként; azonosítás és projektmodul már ezen fut, tesztelve (`server/*.test.ts`), és a felület (bejelentkezés, projektoldal) is átkötve rá;
+- Google és e-mail/jelszó belépés az új háttérrendszeren, nyilvános regisztráció nélkül *(a feladat-, esemény- és értesítésmodul egyelőre még a Supabase-en fut, lásd fent)*;
 - védett alkalmazásútvonalak, asztali és mobil navigáció, PWA-alap;
 - profil-, szerep-, jogosultság-, delegáció- és audit-adatmodell;
 - minden üzleti táblán bekapcsolt és kikényszerített RLS;

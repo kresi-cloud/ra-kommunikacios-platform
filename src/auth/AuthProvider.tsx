@@ -1,7 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
-import type { Session } from '@supabase/supabase-js'
-import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react'
-import { supabase } from '../lib/supabase'
+import { createContext, useContext, useMemo, type PropsWithChildren } from 'react'
+import { authClient } from '../lib/auth-client'
+
+// A `session` alak szándékosan a korábbi Supabase Session minimális
+// részhalmazát tükrözi (session.user.id, session.user.email), hogy a még
+// nem portolt oldalak (feladatok, naptár, értesítések – lásd
+// docs/architecture-migration.md) változatlanul működjenek eddig a pontig.
+type SessionUser = { id: string; email: string | null }
+type Session = { user: SessionUser }
 
 type AuthState = {
   session: Session | null
@@ -13,36 +19,19 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(Boolean(supabase))
+  const { data, isPending } = authClient.useSession()
 
-  useEffect(() => {
-    if (!supabase) return
-
-    void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
-
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-      setLoading(false)
-    })
-
-    return () => data.subscription.unsubscribe()
-  }, [])
-
-  const value = useMemo<AuthState>(
-    () => ({
-      session,
-      loading,
-      configured: Boolean(supabase),
+  const value = useMemo<AuthState>(() => {
+    const user = data?.user
+    return {
+      session: user ? { user: { id: user.id, email: user.email ?? null } } : null,
+      loading: isPending,
+      configured: true,
       signOut: async () => {
-        if (supabase) await supabase.auth.signOut()
+        await authClient.signOut()
       }
-    }),
-    [loading, session]
-  )
+    }
+  }, [data, isPending])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

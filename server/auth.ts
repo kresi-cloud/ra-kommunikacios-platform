@@ -18,6 +18,10 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'sqlite', schema }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:5173',
+  // A helyi fejlesztői szerver portja géptől és a Vite saját portfoglalási
+  // logikájától függően eltérhet az 5173-től (lásd vite.config.ts); a
+  // csillagos minta csak localhost-originokra illeszkedik, külső hosztra nem.
+  trustedOrigins: process.env.BETTER_AUTH_URL ? [] : ['http://localhost:*'],
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 12,

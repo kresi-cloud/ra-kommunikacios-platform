@@ -16,7 +16,7 @@ export function TasksPage() {
   const queryClient = useQueryClient()
   const { session } = useAuth()
   const tasks = useQuery({ queryKey: ['tasks'], queryFn: () => { if (!supabase) throw new Error(); return listTasks(supabase) }, enabled: Boolean(supabase) })
-  const projects = useQuery({ queryKey: ['projects'], queryFn: () => { if (!supabase) throw new Error(); return listProjects(supabase) }, enabled: Boolean(supabase && showForm) })
+  const projects = useQuery({ queryKey: ['projects'], queryFn: listProjects, enabled: showForm })
   const users = useQuery({ queryKey: ['assignable-users', projectId], queryFn: () => { if (!supabase) throw new Error(); return listAssignableUsers(supabase, projectId || undefined) }, enabled: Boolean(supabase && showForm) })
   const create = useMutation({ mutationFn: async (input: Parameters<typeof createTask>[1]) => { if (!supabase) throw new Error(); return createTask(supabase, input) }, onSuccess: async () => { setShowForm(false); await queryClient.invalidateQueries({ queryKey: ['tasks'] }) } })
   const transition = useMutation({ mutationFn: ({ taskId, status, reason }: { taskId: string; status: Parameters<typeof transitionTask>[2]; reason?: string | undefined }) => { if (!supabase) throw new Error(); return transitionTask(supabase, taskId, status, reason) }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['tasks'] }) } })

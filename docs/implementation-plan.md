@@ -42,11 +42,13 @@ Az adattár-migráció miatt a korábbi "Következő kis szállítási egység" 
 e-mail kézbesítő) háttérbe kerül, amíg a meglévő funkciók át nem kerülnek az
 új háttérrendszerre. Sorrend:
 
-1. A frontend bejelentkezés és projektoldal átkötése az új `server/`
-   végpontokra (`/api/auth/*`, `/api/projects`), a Supabase-kliens
-   eltávolítása ezekről a felületekről.
+1. ~~A frontend bejelentkezés és projektoldal átkötése az új `server/`
+   végpontokra~~ – kész: `src/lib/auth-client.ts`, `src/auth/AuthProvider.tsx`,
+   `src/pages/LoginPage.tsx`, `src/pages/ProjectsPage.tsx`, `src/api/projects.ts`.
+   Bootstrap-fiók létrehozásához lásd `docs/architecture-migration.md`.
 2. Feladatmodell (I1/B1) portolása: `server/db/schema.ts` kiegészítése,
-   `server/services/tasks.ts`, jogosultsági és állapotgép-tesztek.
+   `server/services/tasks.ts`, jogosultsági és állapotgép-tesztek, majd a
+   `TasksPage`/`TaskDetailPage` átkötése.
 3. Eseménymodell és naptár (I1/B2) portolása ugyanígy.
 4. Értesítési outbox (I1/B3) portolása; csak ezután folytatódik az eredeti
    terv szerinti I1/B4 (külső kézbesítő, napi összefoglaló, Google-szinkron).

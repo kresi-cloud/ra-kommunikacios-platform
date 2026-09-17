@@ -26,7 +26,7 @@ export function CalendarPage() {
     },
     enabled: Boolean(supabase)
   })
-  const projects = useQuery({ queryKey: ['projects'], queryFn: () => { if (!supabase) throw new Error(); return listProjects(supabase) }, enabled: Boolean(supabase && showForm) })
+  const projects = useQuery({ queryKey: ['projects'], queryFn: listProjects, enabled: showForm })
   const users = useQuery({ queryKey: ['assignable-users', projectId], queryFn: () => { if (!supabase) throw new Error(); return listAssignableUsers(supabase, projectId || undefined) }, enabled: Boolean(supabase && showForm) })
   const ownAvailability = useQuery({ queryKey: ['availability', 'own'], queryFn: () => { if (!supabase) throw new Error(); return listOwnAvailability(supabase) }, enabled: Boolean(supabase) })
   const busySlots = useQuery({ queryKey: ['availability', 'busy', rangeStart.toISOString().slice(0, 10)], queryFn: () => { if (!supabase) throw new Error(); return listBusySlots(supabase, rangeStart, rangeEnd) }, enabled: Boolean(supabase) })
