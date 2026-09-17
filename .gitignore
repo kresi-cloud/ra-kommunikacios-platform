@@ -9,3 +9,7 @@ test-results
 .DS_Store
 *.log
 .supabase
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+!data/.gitkeep

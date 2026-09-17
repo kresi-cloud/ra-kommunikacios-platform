@@ -1,11 +1,12 @@
 # RA kommunikációs platform
 
-Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript és Supabase alapon. A repository az I0 biztonsági alapot, az I1 projektmodulját, valamint a feladat- és eseménymodul használható koordinációs felületeit tartalmazza.
+Belső, magyar nyelvű kommunikációs munkaplatform React, TypeScript alapon. A háttérrendszer Supabase-ről egy önhosztolt SQLite + Hono + Drizzle + better-auth stackre áll át; részletek és az átállás állapota: [docs/architecture-migration.md](docs/architecture-migration.md). Az azonosítás és a projektmodul már az új háttérrendszeren fut, a feladat-, esemény- és értesítésmodul portolása folyamatban van, addig a Supabase-en fut tovább.
 
 ## Elkészült
 
 - szigorú TypeScript-, lint-, unit- és build-ellenőrzés;
-- Supabase Auth alapú belépés Google és e-mail/jelszó útvonalon, nyilvános regisztráció nélkül;
+- **új háttérrendszer** (`server/`): SQLite + Drizzle + Hono + better-auth, saját jogosultsági réteg (`server/authz.ts`) a korábbi RLS/RPC-logika alkalmazáskódos megfelelőjeként; azonosítás és projektmodul már ezen fut, tesztelve (`server/*.test.ts`);
+- Supabase Auth alapú belépés Google és e-mail/jelszó útvonalon, nyilvános regisztráció nélkül *(a feladat-, esemény- és értesítésmodulnál egyelőre még ez fut, lásd fent)*;
 - védett alkalmazásútvonalak, asztali és mobil navigáció, PWA-alap;
 - profil-, szerep-, jogosultság-, delegáció- és audit-adatmodell;
 - minden üzleti táblán bekapcsolt és kikényszerített RLS;
@@ -32,11 +33,11 @@ Követelmény: Node.js 22 vagy újabb.
 
 ```bash
 npm ci
-cp .env.example .env.local
+cp .env.example .env.local   # tölts ki legalább egy BETTER_AUTH_SECRET-et
 npm run dev
 ```
 
-Az `.env.local` fájlban valódi Supabase projekt URL és anon kulcs szükséges. A service-role kulcsot tilos kliensoldali változóba tenni.
+A `npm run dev` a Vite dev szerverrel egy folyamatban indítja az új Hono API-szervert; a helyi SQLite-fájlt (`data/`) és a szükséges táblákat automatikusan létrehozza/migrálja. A még nem portolt feladat-, esemény- és értesítésfelületekhez az `.env.local`-ban a Supabase-adatok is szükségesek egyelőre (lásd `.env.example`). A service-role kulcsot és a `BETTER_AUTH_SECRET`-et tilos kliensoldali változóba tenni.
 
 ## Ellenőrzések
 

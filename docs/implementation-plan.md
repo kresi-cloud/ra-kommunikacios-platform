@@ -1,5 +1,16 @@
 # Implementációs terv
 
+## Adattár-migráció folyamatban
+
+A csapat a Supabase-t (Lovable-örökség, nem tudatos választás) egy
+önhosztolt SQLite + Hono + Drizzle + better-auth stackre cseréli. Az I0
+(azonosítás/szerepek/audit) és az I1/A (projektek) már az új
+háttérrendszeren fut; a többi terület portolása folyamatban van. Részletek,
+indoklás és a biztonsági modell változása: [architecture-migration.md](architecture-migration.md).
+Az alábbi táblázat a funkcionális inkrementumok állapotát mutatja a
+korábbi (Supabase-alapú) fejlesztési szakaszból; ezek tartalma nem változott,
+csak a végrehajtási rétegük kerül át fokozatosan.
+
 ## Állapot
 
 | Inkrementum | Tartalom | Állapot |
@@ -27,8 +38,17 @@ Nyitott döntés: a késedelmes (`task.overdue`) értesítés a határidő után
 
 ## Következő kis szállítási egység
 
-1. Outbox-feldolgozó szerveroldali végpont e-mail csatornára, újrapróbálással és `notification_deliveries` naplóval (TC-NOT-011).
-2. Napi 08:00 összefoglaló (A19) és kötelező válaszidő lejáratának figyelmeztetése (A17).
-3. Google OAuth-kapcsolat létrehozása Edge Functionnel és ütemezett busy-sync a meglévő `private.sync_google_busy_blocks` RPC-re.
+Az adattár-migráció miatt a korábbi "Következő kis szállítási egység" (I1/B4,
+e-mail kézbesítő) háttérbe kerül, amíg a meglévő funkciók át nem kerülnek az
+új háttérrendszerre. Sorrend:
+
+1. A frontend bejelentkezés és projektoldal átkötése az új `server/`
+   végpontokra (`/api/auth/*`, `/api/projects`), a Supabase-kliens
+   eltávolítása ezekről a felületekről.
+2. Feladatmodell (I1/B1) portolása: `server/db/schema.ts` kiegészítése,
+   `server/services/tasks.ts`, jogosultsági és állapotgép-tesztek.
+3. Eseménymodell és naptár (I1/B2) portolása ugyanígy.
+4. Értesítési outbox (I1/B3) portolása; csak ezután folytatódik az eredeti
+   terv szerinti I1/B4 (külső kézbesítő, napi összefoglaló, Google-szinkron).
 
 Minden egység csak releváns automata teszttel és frissített dokumentációval tekinthető késznek.
