@@ -51,4 +51,4 @@ A DB-teszthez előbb futó, migrált Supabase adatbázis kell. A CI ezt `supabas
 
 ## Dokumentáció
 
-Az implementációs és üzemeltetési dokumentáció a `docs/` mappában, a változatlan forrásspecifikációk a `docs/specifications/` mappában találhatók. A Cloudflare Pages + Supabase pilot lépéseit a `docs/pilot-deployment.md` rögzíti. Az eltérően nem jelölt nyitott üzleti konfigurációk értéke `[CONFIGURE_ME]`.
+Az implementációs és üzemeltetési dokumentáció a `docs/` mappában, a változatlan forrásspecifikációk a `docs/specifications/` mappában találhatók. A Cloudflare Pages + Supabase pilot lépéseit a `docs/pilot-deployment.md` rögzíti. Hasonló piaci alkalmazások és átvehető jó gyakorlatok: [`docs/piackutatas-hasonlo-alkalmazasok.md`](docs/piackutatas-hasonlo-alkalmazasok.md). Az eltérően nem jelölt nyitott üzleti konfigurációk értéke `[CONFIGURE_ME]`.
