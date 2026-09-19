@@ -6,6 +6,7 @@ import { auth } from './auth'
 import { runMigrations } from './db/migrate'
 import { ensureDevPersonas } from './dev-seed'
 import { registerProjectRoutes } from './routes/projects'
+import { registerTaskRoutes } from './routes/tasks'
 
 runMigrations()
 
@@ -26,5 +27,6 @@ app.get('/api/me', async (c) => {
 })
 
 registerProjectRoutes(app)
+registerTaskRoutes(app)
 
 export default app

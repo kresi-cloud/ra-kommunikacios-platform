@@ -22,11 +22,11 @@ const task: Task = {
 describe('feladat domain', () => {
   it('adatbázissorból doménobjektumot készít', () => {
     expect(parseTaskRow({
-      id: task.id, task_code: task.taskCode, title: task.title,
-      responsible_user_id: task.responsibleUserId, status: task.status,
-      acceptance_status: task.acceptanceStatus, priority: task.priority,
-      due_at: task.dueAt, unscheduled: false, requires_review: false,
-      updated_at: task.updatedAt
+      id: task.id, taskCode: task.taskCode, title: task.title,
+      responsibleUserId: task.responsibleUserId, status: task.status,
+      acceptanceStatus: task.acceptanceStatus, priority: task.priority,
+      dueAt: task.dueAt, unscheduled: false, requiresReview: false,
+      updatedAt: task.updatedAt
     })).toEqual(task)
   })
 

@@ -45,10 +45,19 @@ e-mail kézbesítő) háttérbe kerül, amíg a meglévő funkciók át nem ker�
 1. ~~A frontend bejelentkezés és projektoldal átkötése az új `server/`
    végpontokra~~ – kész: `src/lib/auth-client.ts`, `src/auth/AuthProvider.tsx`,
    `src/pages/LoginPage.tsx`, `src/pages/ProjectsPage.tsx`, `src/api/projects.ts`.
-   Bootstrap-fiók létrehozásához lásd `docs/architecture-migration.md`.
-2. Feladatmodell (I1/B1) portolása: `server/db/schema.ts` kiegészítése,
-   `server/services/tasks.ts`, jogosultsági és állapotgép-tesztek, majd a
-   `TasksPage`/`TaskDetailPage` átkötése.
+   Bootstrap-fiók létrehozásához és a fejlesztői gyorsbelépéshez lásd
+   `docs/architecture-migration.md`.
+2. ~~Feladatmodell (I1/B1) portolása~~ – kész: `server/db/schema.ts` (tasks,
+   task_assignments_history, task_deadline_history, task_block_details),
+   `server/authz.ts` (`canAccessTask`), `server/services/tasks.ts`
+   (create/transition/change_deadline/reassign/get_capabilities, szó
+   szerint az eredeti állapotgép-logikát követve), `server/routes/tasks.ts`,
+   32 automata teszt (`server/authz.test.ts`, `server/services/tasks.test.ts`),
+   a `TasksPage`/`TaskDetailPage`/`DashboardPage` átkötve. Élő böngészős
+   próbával ellenőrizve: létrehozás → elfogadás → indítás. A felelős- és
+   felhasználóválasztó felület egyelőre a bejelentkezett felhasználóra
+   korlátozott, mert a felhasználólistázó végpont (`list_active_users`,
+   `list_assignable_users` megfelelője) még nincs portolva.
 3. Eseménymodell és naptár (I1/B2) portolása ugyanígy.
 4. Értesítési outbox (I1/B3) portolása; csak ezután folytatódik az eredeti
    terv szerinti I1/B4 (külső kézbesítő, napi összefoglaló, Google-szinkron).

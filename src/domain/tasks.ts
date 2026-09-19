@@ -47,23 +47,28 @@ export const taskSchema = z.object({
 
 export type Task = z.infer<typeof taskSchema>
 
+/**
+ * A saját Hono API (server/routes/tasks.ts) a Drizzle-séma camelCase
+ * mezőnevein adja vissza a feladatot, ezért itt – a korábbi Supabase-sortól
+ * eltérően – nincs snake_case-ről való átalakítás.
+ */
 export function parseTaskRow(row: Record<string, unknown>): Task {
   return taskSchema.parse({
     id: row.id,
-    taskCode: row.task_code,
+    taskCode: row.taskCode,
     title: row.title,
     description: row.description ?? null,
-    responsibleUserId: row.responsible_user_id,
-    projectId: row.project_id ?? null,
-    eventId: row.event_id ?? null,
+    responsibleUserId: row.responsibleUserId,
+    projectId: row.projectId ?? null,
+    eventId: row.eventId ?? null,
     status: row.status,
-    acceptanceStatus: row.acceptance_status,
+    acceptanceStatus: row.acceptanceStatus,
     priority: row.priority,
-    dueAt: row.due_at ?? null,
+    dueAt: row.dueAt ?? null,
     unscheduled: row.unscheduled,
-    requiresReview: row.requires_review,
-    reviewerUserId: row.reviewer_user_id ?? null,
-    updatedAt: row.updated_at
+    requiresReview: row.requiresReview,
+    reviewerUserId: row.reviewerUserId ?? null,
+    updatedAt: row.updatedAt
   })
 }
 

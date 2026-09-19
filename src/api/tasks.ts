@@ -1,43 +1,36 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+// A saját Hono API-t hívja (server/routes/tasks.ts) a korábbi
+// Supabase-kliens helyett. Lásd src/api/projects.ts a mintázatért.
 import { parseTaskRow, type Task, type TaskStatus } from '../domain/tasks'
 
-const taskColumns = 'id,task_code,title,description,responsible_user_id,project_id,event_id,status,acceptance_status,priority,due_at,unscheduled,requires_review,reviewer_user_id,updated_at'
-type RpcResult = { data: unknown; error: { message?: string } | null }
-
-function rpcRow(value: unknown): Record<string, unknown> {
-  const row: unknown = Array.isArray(value) ? (value as unknown[])[0] : value
-  if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Érvénytelen szerverválasz.')
-  return row as Record<string, unknown>
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, {
+    ...init,
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) }
+  })
+  const body: unknown = await response.json().catch(() => null)
+  if (!response.ok) {
+    const message = body && typeof body === 'object' && 'error' in body ? String(body.error) : null
+    throw new Error(message || 'A kérés nem sikerült.')
+  }
+  return body as T
 }
 
 export type TaskCapabilities = { canChangeDeadline: boolean; canReassign: boolean }
 
-export async function listOpenTasks(client: SupabaseClient): Promise<Task[]> {
-  const { data, error } = await client
-    .from('tasks')
-    .select(taskColumns)
-    .neq('status', 'completed')
-    .neq('status', 'withdrawn')
-    .neq('status', 'archived')
-    .order('due_at', { ascending: true, nullsFirst: false })
-    .limit(100)
-
-  if (error) throw new Error('A feladatok betöltése nem sikerült.')
-  return (data ?? []).map((row) => parseTaskRow(row))
+export async function listOpenTasks(): Promise<Task[]> {
+  const data = await apiFetch<{ tasks: Record<string, unknown>[] }>('/api/tasks?onlyOpen=true')
+  return data.tasks.map((row) => parseTaskRow(row))
 }
 
-export async function listTasks(client: SupabaseClient): Promise<Task[]> {
-  const { data, error } = await client.from('tasks').select(taskColumns)
-    .neq('status', 'withdrawn').neq('status', 'archived')
-    .order('due_at', { ascending: true, nullsFirst: false }).limit(200)
-  if (error) throw new Error('A feladatok betöltése nem sikerült.')
-  return (data ?? []).map((row) => parseTaskRow(row))
+export async function listTasks(): Promise<Task[]> {
+  const data = await apiFetch<{ tasks: Record<string, unknown>[] }>('/api/tasks?onlyOpen=false')
+  return data.tasks.map((row) => parseTaskRow(row))
 }
 
-export async function getTask(client: SupabaseClient, id: string): Promise<Task> {
-  const { data, error } = await client.from('tasks').select(taskColumns).eq('id', id).single()
-  if (error) throw new Error('A feladat betöltése nem sikerült.')
-  return parseTaskRow(data)
+export async function getTask(id: string): Promise<Task> {
+  const data = await apiFetch<{ task: Record<string, unknown> }>(`/api/tasks/${id}`)
+  return parseTaskRow(data.task)
 }
 
 export type CreateTaskInput = {
@@ -50,63 +43,46 @@ export type CreateTaskInput = {
   criticalReason?: string | undefined
 }
 
-export async function createTask(client: SupabaseClient, input: CreateTaskInput): Promise<Task> {
-  const { data, error } = await client.rpc('create_task', {
-    task_title: input.title,
-    task_responsible_user_id: input.responsibleUserId,
-    task_project_id: input.projectId || null,
-    task_description: input.description || null,
-    task_due_at: input.dueAt || null,
-    task_priority: input.priority,
-    task_requires_review: false,
-    task_reviewer_user_id: null,
-    assign_immediately: true,
-    critical_reason: input.criticalReason || null
-  }) as unknown as RpcResult
-  if (error) throw new Error(error.message || 'A feladat létrehozása nem sikerült.')
-  return parseTaskRow(rpcRow(data))
+export async function createTask(input: CreateTaskInput): Promise<Task> {
+  const data = await apiFetch<{ task: Record<string, unknown> }>('/api/tasks', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: input.title,
+      responsibleUserId: input.responsibleUserId,
+      projectId: input.projectId || null,
+      description: input.description || null,
+      dueAt: input.dueAt || null,
+      priority: input.priority,
+      criticalReason: input.criticalReason || null
+    })
+  })
+  return parseTaskRow(data.task)
 }
 
-export async function transitionTask(
-  client: SupabaseClient,
-  taskId: string,
-  status: TaskStatus,
-  reason?: string
-): Promise<Task> {
-  const { data, error } = await client.rpc('transition_task', {
-    target_task_id: taskId,
-    target_status: status,
-    transition_reason: reason || null,
-    new_due_at: null,
-    confirm_existing_due: false
-  }) as unknown as RpcResult
-  if (error) throw new Error(error.message || 'Az állapotváltás nem sikerült.')
-  return parseTaskRow(rpcRow(data))
+export async function transitionTask(taskId: string, status: TaskStatus, reason?: string): Promise<Task> {
+  const data = await apiFetch<{ task: Record<string, unknown> }>(`/api/tasks/${taskId}/transition`, {
+    method: 'POST',
+    body: JSON.stringify({ targetStatus: status, reason: reason || null })
+  })
+  return parseTaskRow(data.task)
 }
 
-export async function getTaskCapabilities(client: SupabaseClient, taskId: string): Promise<TaskCapabilities> {
-  const { data, error } = await client.rpc('get_task_capabilities', { target_task_id: taskId }) as unknown as RpcResult
-  if (error) throw new Error('A feladatműveletek jogosultságvizsgálata nem sikerült.')
-  const row = rpcRow(data)
-  return { canChangeDeadline: Boolean(row.can_change_deadline), canReassign: Boolean(row.can_reassign) }
+export async function getTaskCapabilities(taskId: string): Promise<TaskCapabilities> {
+  return apiFetch<TaskCapabilities>(`/api/tasks/${taskId}/capabilities`)
 }
 
-export async function changeTaskDeadline(
-  client: SupabaseClient, taskId: string, dueAt: string | null, reason: string
-): Promise<Task> {
-  const { data, error } = await client.rpc('change_task_deadline', {
-    target_task_id: taskId, target_due_at: dueAt, change_reason: reason
-  }) as unknown as RpcResult
-  if (error) throw new Error(error.message || 'A határidő módosítása nem sikerült.')
-  return parseTaskRow(rpcRow(data))
+export async function changeTaskDeadline(taskId: string, dueAt: string | null, reason: string): Promise<Task> {
+  const data = await apiFetch<{ task: Record<string, unknown> }>(`/api/tasks/${taskId}/deadline`, {
+    method: 'POST',
+    body: JSON.stringify({ dueAt, reason })
+  })
+  return parseTaskRow(data.task)
 }
 
-export async function reassignTask(
-  client: SupabaseClient, taskId: string, responsibleUserId: string, reason: string
-): Promise<Task> {
-  const { data, error } = await client.rpc('reassign_task', {
-    target_task_id: taskId, new_responsible_user_id: responsibleUserId, transfer_reason: reason
-  }) as unknown as RpcResult
-  if (error) throw new Error(error.message || 'A feladat átadása nem sikerült.')
-  return parseTaskRow(rpcRow(data))
+export async function reassignTask(taskId: string, responsibleUserId: string, reason: string): Promise<Task> {
+  const data = await apiFetch<{ task: Record<string, unknown> }>(`/api/tasks/${taskId}/reassign`, {
+    method: 'POST',
+    body: JSON.stringify({ responsibleUserId, reason })
+  })
+  return parseTaskRow(data.task)
 }

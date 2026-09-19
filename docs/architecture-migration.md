@@ -65,19 +65,20 @@ funkciónként, teljes vertikális szeletekben halad:
 |---|---|
 | Azonosítás, szerepek, jogosultságok, audit (I0 megfelelője) | **Kész az új háttérrendszeren**: `server/auth.ts`, `server/authz.ts`, `server/db/schema.ts` |
 | Projektek (I1/A megfelelője) | **Kész az új háttérrendszeren**: `server/services/projects.ts`, `server/routes/projects.ts` |
-| Feladatok, események, naptár (I1/B1–B2) | **Még a Supabase-en fut**, portolás folyamatban |
+| Feladatok (I1/B1 megfelelője) | **Kész az új háttérrendszeren**: `server/services/tasks.ts`, `server/routes/tasks.ts`, élő böngészős próbával ellenőrizve |
+| Események, naptár (I1/B2) | **Még a Supabase-en fut**, portolás folyamatban |
 | Értesítések, háttérfeladatok (I1/B3) | **Még a Supabase-en fut**, portolás folyamatban |
 | Frontend: bejelentkezés (`AuthProvider`, `LoginPage`) | **Átkötve**: `src/lib/auth-client.ts` (better-auth React kliens), `session.user.{id,email}` alakja szándékosan változatlan, hogy a még nem portolt oldalak ne törjenek |
 | Frontend: projektoldal (`ProjectsPage`) | **Átkötve**: `src/api/projects.ts` fetch-alapú kliensre, listázás és létrehozás is működik |
-| Frontend: feladatok, naptár, értesítések | **Még nincs átkötve**; a `TasksPage`/`CalendarPage` projekt-legördülője már az új végpontot hívja (`listProjects()`), a feladat-/esemény-/értesítésadat továbbra is a Supabase-klienstől jön |
+| Frontend: feladatoldalak (`TasksPage`, `TaskDetailPage`) | **Átkötve**: `src/api/tasks.ts`; a felelős-/átadás-választó egyelőre a bejelentkezett felhasználóra korlátozott, mert a felhasználólistázó végpont még nincs portolva |
+| Frontend: naptár, értesítések | **Még nincs átkötve**; a `CalendarPage` projekt-legördülője már az új végpontot hívja (`listProjects()`), az esemény-/értesítésadat továbbra is a Supabase-klienstől jön |
 
-A bejelentkezés és a projektoldal átkötése után a feladat-, esemény- és
-értesítésoldalak a Supabase-kliensen keresztül próbálnak adatot lekérni, de
-munkamenet (Supabase Auth session) híján ez RLS-hibát ad – ez a jelenlegi,
-átmeneti állapotban várt, dokumentált viselkedés, nem hiba. Ezek az oldalak
-a saját portolásukig a meglévő általános hibabannereket mutatják ("A
-feladatok betöltése nem sikerült." stb.), ami nem egyértelmű "átállás alatt"
-üzenet – ezt érdemes finomítani, ha ez zavaró a fejlesztés közben.
+A naptár és az értesítések a Supabase-kliensen keresztül próbálnak adatot
+lekérni, de munkamenet (Supabase Auth session) híján ez RLS-hibát ad – ez a
+jelenlegi, átmeneti állapotban várt, dokumentált viselkedés, nem hiba. Ezek
+az oldalak a saját portolásukig a meglévő általános hibabannereket mutatják
+("A naptár betöltése nem sikerült." stb.), ami nem egyértelmű "átállás
+alatt" üzenet – ezt érdemes finomítani, ha ez zavaró a fejlesztés közben.
 
 A `supabase/migrations/` és a `docs/permissions-and-rls.md` régi tartalma
 referenciaként marad addig, amíg minden funkció át nem kerül; ezután

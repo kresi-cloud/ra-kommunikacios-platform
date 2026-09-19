@@ -8,6 +8,13 @@
       "when": 1789647451691,
       "tag": "0000_worthless_sentinels",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789799131207,
+      "tag": "0001_swift_wiccan",
+      "breakpoints": true
     }
   ]
 }

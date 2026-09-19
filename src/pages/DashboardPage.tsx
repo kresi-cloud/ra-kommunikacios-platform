@@ -10,8 +10,7 @@ export function DashboardPage() {
   const now = new Date()
   const tasks = useQuery({
     queryKey: ['tasks', 'open'],
-    queryFn: () => listOpenTasks(supabase!),
-    enabled: Boolean(supabase)
+    queryFn: listOpenTasks
   })
   const events = useQuery({
     queryKey: ['calendar', 'dashboard'],
@@ -36,7 +35,7 @@ export function DashboardPage() {
         <section className="metric-card"><strong>{metrics.todayEvents}</strong><span>Mai esemény</span></section>
       </div>
       {(tasks.isError || events.isError) && <div className="error-banner" role="alert">A napi helyzetkép részben nem tölthető be.</div>}
-      {!supabase && <p className="demo-note">Az adatkapcsolat konfigurálásáig a napi kártyák üres állapotot mutatnak.</p>}
+      {!supabase && <p className="demo-note">A naptári adatok a Supabase-átállás befejezéséig nem érhetők el, ezért a mai esemény mutató üres állapotot mutat.</p>}
     </main>
   )
 }

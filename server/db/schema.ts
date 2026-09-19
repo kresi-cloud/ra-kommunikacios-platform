@@ -144,3 +144,87 @@ export const projectCriticalBlocks = sqliteTable('project_critical_blocks', {
   resolvedAt: text('resolved_at'),
   resolvedBy: text('resolved_by').references(() => user.id, { onDelete: 'restrict' })
 })
+
+// ---------------------------------------------------------------------------
+// Feladatok (I1/B1 megfelelője)
+// ---------------------------------------------------------------------------
+
+export const taskStatusValues = [
+  'draft', 'assigned', 'accepted', 'in_progress', 'clarification_needed',
+  'blocked', 'in_review', 'completed', 'withdrawn', 'archived'
+] as const
+
+export const taskAcceptanceStatusValues = [
+  'not_requested', 'pending', 'accepted', 'clarification_requested', 'obstacle_reported'
+] as const
+
+export const priorityLevelValues = ['normal', 'critical'] as const
+
+export const tasks = sqliteTable('tasks', {
+  id: text('id').primaryKey(),
+  taskCode: text('task_code').notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  responsibleUserId: text('responsible_user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  projectId: text('project_id').references(() => projects.id, { onDelete: 'restrict' }),
+  // A contents és events tábla még nem portolt (I2 / I1/B2); az azonosító
+  // addig nem kap idegen kulcs kényszert, ugyanúgy, ahogy az eredeti
+  // Postgres-migráció is jelezte a content_id-nál.
+  contentId: text('content_id'),
+  eventId: text('event_id'),
+  parentTaskId: text('parent_task_id'),
+  status: text('status', { enum: taskStatusValues }).notNull().default('draft'),
+  acceptanceStatus: text('acceptance_status', { enum: taskAcceptanceStatusValues }).notNull().default('not_requested'),
+  priority: text('priority', { enum: priorityLevelValues }).notNull().default('normal'),
+  dueAt: text('due_at'),
+  unscheduled: integer('unscheduled', { mode: 'boolean' }).notNull().default(true),
+  isPublicationRequired: integer('is_publication_required', { mode: 'boolean' }).notNull().default(false),
+  requiresReview: integer('requires_review', { mode: 'boolean' }).notNull().default(false),
+  reviewerUserId: text('reviewer_user_id').references(() => user.id, { onDelete: 'restrict' }),
+  startedAt: text('started_at'),
+  completedAt: text('completed_at'),
+  completedBy: text('completed_by').references(() => user.id, { onDelete: 'restrict' }),
+  withdrawnAt: text('withdrawn_at'),
+  withdrawnBy: text('withdrawn_by').references(() => user.id, { onDelete: 'restrict' }),
+  createdAt: text('created_at').notNull(),
+  createdBy: text('created_by').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  updatedAt: text('updated_at').notNull(),
+  updatedBy: text('updated_by').notNull().references(() => user.id, { onDelete: 'restrict' })
+})
+
+export const taskAssignmentsHistory = sqliteTable('task_assignments_history', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'restrict' }),
+  fromUserId: text('from_user_id').references(() => user.id, { onDelete: 'restrict' }),
+  toUserId: text('to_user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  reason: text('reason').notNull(),
+  changedBy: text('changed_by').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  changedAt: text('changed_at').notNull()
+})
+
+export const taskDeadlineHistory = sqliteTable('task_deadline_history', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'restrict' }),
+  oldDueAt: text('old_due_at'),
+  newDueAt: text('new_due_at'),
+  reason: text('reason').notNull(),
+  changedBy: text('changed_by').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  changedAt: text('changed_at').notNull()
+})
+
+export const taskBlockDetails = sqliteTable('task_block_details', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'restrict' }),
+  blockReasonCode: text('block_reason_code').notNull(),
+  details: text('details').notNull(),
+  waitingForUserId: text('waiting_for_user_id').references(() => user.id, { onDelete: 'restrict' }),
+  waitingForExternalParty: integer('waiting_for_external_party', { mode: 'boolean' }).notNull().default(false),
+  startedAt: text('started_at').notNull(),
+  resolvedAt: text('resolved_at'),
+  resolvedBy: text('resolved_by').references(() => user.id, { onDelete: 'restrict' }),
+  resolutionNote: text('resolution_note')
+}, (table) => ({
+  activeBlockUnique: uniqueIndex('task_active_block_unique')
+    .on(table.taskId)
+    .where(sql`${table.resolvedAt} is null`)
+}))

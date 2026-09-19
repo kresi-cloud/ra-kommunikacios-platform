@@ -8,6 +8,7 @@ let db: AppDatabase
 let userTable: typeof import('./db/auth-schema')['user']
 let roles: typeof import('./db/schema')['roles']
 let userRoleAssignments: typeof import('./db/schema')['userRoleAssignments']
+let tasksTable: typeof import('./db/schema')['tasks']
 let authz: typeof import('./authz')
 
 const ROLE_LEAD = '10000000-0000-0000-0000-000000000001'
@@ -48,7 +49,7 @@ beforeAll(async () => {
   const { runMigrations } = await import('./db/migrate')
   runMigrations()
   ;({ user: userTable } = await import('./db/auth-schema'))
-  ;({ roles, userRoleAssignments } = await import('./db/schema'))
+  ;({ roles, userRoleAssignments, tasks: tasksTable } = await import('./db/schema'))
   authz = await import('./authz')
 
   await db.insert(roles).values([
@@ -107,5 +108,39 @@ describe('canAccessProject', () => {
     await insertUser('u-tech')
     await assignRole('u-tech', ROLE_TECH_ADMIN)
     expect(await authz.canAccessProject(db, 'u-tech', 'proj-x')).toBe(false)
+  })
+})
+
+describe('canAccessTask', () => {
+  async function insertTask(id: string, responsibleUserId: string) {
+    const now = new Date().toISOString()
+    await db.insert(tasksTable).values({
+      id, taskCode: `TASK-${id}`, title: 'Teszt feladat', responsibleUserId,
+      status: 'assigned', acceptanceStatus: 'pending', priority: 'normal', unscheduled: true,
+      createdAt: now, createdBy: responsibleUserId, updatedAt: now, updatedBy: responsibleUserId
+    })
+  }
+
+  it('a felelős mindig hozzáfér a saját feladatához', async () => {
+    await insertUser('u-task-responsible')
+    await insertTask('t-1', 'u-task-responsible')
+    expect(await authz.canAccessTask(db, 'u-task-responsible', 't-1')).toBe(true)
+  })
+
+  it('idegen, projekt nélküli feladathoz nem fér hozzá más munkatárs', async () => {
+    await insertUser('u-task-other')
+    expect(await authz.canAccessTask(db, 'u-task-other', 't-1')).toBe(false)
+  })
+
+  it('a technikai admin a saját feladatához sem fér hozzá', async () => {
+    // A 'u-tech' fiók a "canAccessProject" leírásban már megkapta a
+    // technical_admin szerepet; itt csak egy hozzá rendelt feladatot kell
+    // felvenni ugyanahhoz a fiókhoz.
+    await insertTask('t-2', 'u-tech')
+    expect(await authz.canAccessTask(db, 'u-tech', 't-2')).toBe(false)
+  })
+
+  it('nem létező feladatra hamisat ad', async () => {
+    expect(await authz.canAccessTask(db, 'u-task-responsible', 'nincs-ilyen')).toBe(false)
   })
 })

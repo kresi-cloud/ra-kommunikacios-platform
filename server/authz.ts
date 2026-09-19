@@ -8,7 +8,7 @@ import { and, eq, gte, isNull, lte, or } from 'drizzle-orm'
 import type { AppDatabase } from './db/client'
 import { user } from './db/auth-schema'
 import {
-  permissions, projectMembers, projects, roleCodeValues, roles, userPermissionGrants, userRoleAssignments
+  permissions, projectMembers, projects, roleCodeValues, roles, tasks, userPermissionGrants, userRoleAssignments
 } from './db/schema'
 
 export type ScopeType = 'global' | 'project' | 'content' | 'task' | 'event'
@@ -90,8 +90,15 @@ export const isCommunicationLead = (db: AppDatabase, userId: string | null | und
 export const isTechnicalAdmin = (db: AppDatabase, userId: string | null | undefined) =>
   hasRole(db, userId, 'technical_admin')
 
-/** private.is_project_owner megfelelője: a projekt owner_user_id mezője egyezik, és a projekt nincs törölve. */
-export async function isProjectOwnerOfRecord(
+/**
+ * private.is_project_owner megfelelője: pusztán azt nézi, hogy a projekt
+ * owner_user_id mezője a hívóval egyezik-e (nincs törölve). Ez szándékosan
+ * NEM követeli meg a "project_owner" szerepkört is – az eredeti
+ * `transition_project` RPC ezt külön, saját belső ellenőrzésként adta hozzá
+ * (lásd server/services/projects.ts `transitionProject` függvényét, ahol
+ * ez a `hasRole('project_owner', ...)` hívásokkal együtt, inline szerepel).
+ */
+export async function isProjectOwner(
   db: AppDatabase, userId: string | null | undefined, projectId: string
 ): Promise<boolean> {
   if (!(await isActiveUser(db, userId))) return false
@@ -101,18 +108,6 @@ export async function isProjectOwnerOfRecord(
     .where(and(eq(projects.id, projectId), eq(projects.ownerUserId, userId as string), isNull(projects.deletedAt)))
     .limit(1)
   return Boolean(row)
-}
-
-/**
- * private.is_project_owner megfelelője: a saját projekt gazdája ÉS
- * rendelkezik a "project_owner" szereppel (global vagy az adott projektre
- * szóló scope-pal) – a puszta owner_user_id önmagában nem elég jogosultság.
- */
-export async function isProjectOwner(
-  db: AppDatabase, userId: string | null | undefined, projectId: string
-): Promise<boolean> {
-  if (!(await isProjectOwnerOfRecord(db, userId, projectId))) return false
-  return hasRole(db, userId, 'project_owner', { type: 'project', id: projectId })
 }
 
 /** private.is_project_member megfelelője. */
@@ -137,8 +132,26 @@ export async function canAccessProject(
   if (!(await isActiveUser(db, userId))) return false
   if (await isTechnicalAdmin(db, userId)) return false
   if (await isCommunicationLead(db, userId)) return true
-  if (await isProjectOwnerOfRecord(db, userId, projectId)) return true
+  if (await isProjectOwner(db, userId, projectId)) return true
   return isProjectMember(db, userId, projectId)
+}
+
+/** private.can_access_task megfelelője. */
+export async function canAccessTask(
+  db: AppDatabase, userId: string | null | undefined, taskId: string
+): Promise<boolean> {
+  if (!(await isActiveUser(db, userId))) return false
+  if (await isTechnicalAdmin(db, userId)) return false
+  const [task] = await db
+    .select({ responsibleUserId: tasks.responsibleUserId, projectId: tasks.projectId })
+    .from(tasks)
+    .where(eq(tasks.id, taskId))
+    .limit(1)
+  if (!task) return false
+  if (await isCommunicationLead(db, userId)) return true
+  if (task.responsibleUserId === userId) return true
+  if (task.projectId) return canAccessProject(db, userId, task.projectId)
+  return false
 }
 
 export class ForbiddenError extends Error {
