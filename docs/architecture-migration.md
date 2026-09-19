@@ -1,5 +1,10 @@
 # Adattár-migráció: Supabase → SQLite
 
+> A megvalósított állapot fejlesztői pontosságú, részletes specifikációja:
+> [`docs/specifications/RA_uj_hatterendszer_specifikacio_v1.md`](specifications/RA_uj_hatterendszer_specifikacio_v1.md).
+> Ez a dokumentum az indoklást, az átállási naplót és a nyitott kérdéseket
+> tárgyalja.
+
 ## Döntés és indoklás
 
 A projekt Lovable-eredetű scaffoldja Supabase-t (Postgres + RLS + Auth +
