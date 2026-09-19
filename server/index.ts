@@ -4,9 +4,16 @@
 import { Hono } from 'hono'
 import { auth } from './auth'
 import { runMigrations } from './db/migrate'
+import { ensureDevPersonas } from './dev-seed'
 import { registerProjectRoutes } from './routes/projects'
 
 runMigrations()
+
+// Fejlesztői gyorsbelépő fiókok (lásd shared/dev-personas.ts). Élesben
+// (NODE_ENV=production) sosem fut le.
+if (process.env.NODE_ENV !== 'production') {
+  await ensureDevPersonas()
+}
 
 export const app = new Hono()
 

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { authClient } from '../lib/auth-client'
+import { DEV_PERSONAS, type DevPersona } from '../../shared/dev-personas'
 
 export function LoginPage() {
   const { session } = useAuth()
@@ -19,6 +20,14 @@ export function LoginPage() {
     const { error } = await authClient.signIn.email({ email, password })
     setBusy(false)
     if (error) setMessage('A belépés nem sikerült. Ellenőrizd az adatokat, vagy kérj segítséget.')
+  }
+
+  async function handleDevLogin(persona: DevPersona) {
+    setBusy(true)
+    setMessage('')
+    const { error } = await authClient.signIn.email({ email: persona.email, password: persona.password })
+    setBusy(false)
+    if (error) setMessage(`A fejlesztői gyorsbelépés nem sikerült (${persona.roleLabel}).`)
   }
 
   async function handleGoogleLogin() {
@@ -61,6 +70,25 @@ export function LoginPage() {
         {message && <p className="form-error" role="alert">{message}</p>}
         <a className="support-link" href="mailto:[CONFIGURE_ME]">Elfelejtett jelszó vagy segítség</a>
         <p className="privacy-note">Nyilvános regisztráció nincs. A hozzáférés előzetes meghíváshoz kötött.</p>
+
+        {import.meta.env.DEV && (
+          <div className="dev-login-panel">
+            <p className="dev-login-title">Fejlesztői gyorsbelépés</p>
+            <div className="dev-login-grid">
+              {DEV_PERSONAS.map((persona) => (
+                <button
+                  key={persona.email}
+                  type="button"
+                  className="outline-button"
+                  disabled={busy}
+                  onClick={() => void handleDevLogin(persona)}
+                >
+                  {persona.roleLabel}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </main>
   )

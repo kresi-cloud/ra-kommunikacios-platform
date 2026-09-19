@@ -310,3 +310,8 @@ form .primary-button { width: 100%; margin-top: 22px; }
 .preferences-table td { width: 90px; }
 .preferences-table input { width: 20px; height: 20px; min-height: 0; }
 .sync-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+
+.dev-login-panel { margin-top: 24px; padding: 16px; border: 1px dashed #c99a2e; border-radius: 8px; background: #fffaf0; }
+.dev-login-title { margin: 0 0 10px; color: #8a6100; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.dev-login-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dev-login-grid .outline-button { border-color: #c99a2e; color: #8a6100; }
